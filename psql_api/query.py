@@ -1,6 +1,7 @@
 from psycopg2 import pool
 from .app import config
-from flask import Blueprint,Response,stream_with_context,current_app,request,g
+from flask import Response,stream_with_context,request,Blueprint,current_app,g
+
 from astropy import units as u
 
 query_blueprint = Blueprint('query', __name__, template_folder='templates')
@@ -90,13 +91,31 @@ def query():
 
     current_app.logger.debug("Rows Returned:{}".format(rowcount))
     def generateResp():
+        colnames = None
+        yield """
+            {
+                "result" : {
+        """
         while True:
             resp = cur.fetchmany(20)
+            if colnames is None:
+                colnames = [desc[0] for desc in cur.description]
+                colmap = dict(zip(list(range(len(colnames))),colnames))
+                for i in range(len(colnames)):
+                    if colmap[i] == "id":
+                        idPosition = i
+                        break
             if not resp:
                 break
 
+            obj = {}
             for row in resp:
-                row = [str(i) for i in row]
-                yield ",".join(row)+"\n"
+                yield '"{}":'.format(row[idPosition])
+                for j,col in enumerate(row):
+                    if col == "id":
+                        continue
+                    obj[colmap[j]] = col
+                yield "{},".format(str(obj).replace("None","null"))
+        yield "}\n"
 
     return Response(stream_with_context(generateResp()), content_type='application/json')
