@@ -1,5 +1,5 @@
 from .app import cur
-from flask import Blueprint,Response,current_app,request
+from flask import Blueprint,Response,current_app,request, stream_with_context
 
 objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
 
@@ -25,9 +25,9 @@ def get_detections():
                     yield ",".join(row)+"\n"
 
         return Response(stream_with_context(generateResp()), content_type='application/json')
-    except:
+    except Exception as e:
         current_app.logger.exception("Error getting detections from ({})".format(oid))
-        return Response("Something went wrong quering the database",500)
+        return Response("Something went wrong quering the database {}".format(e),500)
 
 
 @objects_blueprint.route("/get_non_detections", methods=("POST",))
