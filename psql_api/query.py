@@ -133,9 +133,10 @@ def query():
             for row in resp:
                 obj = {}
                 for j,col in enumerate(row):
+                    current_app.logger.debug("{}:{}:{}".format(type(col),col, col == float("inf")))
                     if col == "id":
                         continue
-                    obj[colmap[j]] = None if (type(col) is float ) and (math.isnan(col)) else col
+                    obj[colmap[j]] = None if (type(col) is float ) and ((math.isnan(col)) or (col == float("inf"))) else col
                 result["result"][row[idPosition]] = obj
         cur.close()
         return result
