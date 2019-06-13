@@ -4,6 +4,7 @@ from flask import Response,stream_with_context,request,Blueprint,current_app,g,j
 
 from astropy import units as u
 import numpy as np
+import math
 
 query_blueprint = Blueprint('query', __name__, template_folder='templates')
 
@@ -24,7 +25,7 @@ def query():
     records_per_pages = int(data["records_per_pages"]) if "records_per_pages" in data else 20
     page = int(data["page"]) if "page" in data else 1
     row_number = int(data["total"]) if "total" in data else None
-    num_pages = np.ceil(row_number/records_per_pages).astype(np.int) if "total" in data else None
+    num_pages = int(np.ceil(row_number/records_per_pages)) if "total" in data else None
 
     #Base SQL statement
     sql = "SELECT * FROM objects"
@@ -134,7 +135,7 @@ def query():
                 for j,col in enumerate(row):
                     if col == "id":
                         continue
-                    obj[colmap[j]] = col
+                    obj[colmap[j]] = None if (type(col) is float ) and (math.isnan(col)) else col
                 result["result"][row[idPosition]] = obj
         cur.close()
         return result
