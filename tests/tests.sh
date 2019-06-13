@@ -32,3 +32,5 @@ curl -XPOST -d '{"query_parameters":{"filters":{"coordinates":{"ra":"30","dec":"
 
 #get detections
 curl -XPOST -d '{"oid": "ZTF17aabdwqq"}' localhost:8084/get_detections
+#get non_detections
+curl -XPOST -d '{"oid": "ZTF17aabdwqq"}' localhost:8084/get_non_detections

@@ -1,5 +1,6 @@
 from .app import cur
-from flask import Blueprint,Response,current_app,request, stream_with_context
+from flask import Blueprint,Response,current_app,request,jsonify, stream_with_context
+import math
 
 objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
 
@@ -7,26 +8,28 @@ objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
 def get_detections():
     #Check query_parameters
     data = request.get_json(force=True)
-    if "id" not in data:
+    if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
-    id = data["id"]
-    query = "SELECT * FROM detections WHERE id = '{}'".format(id)
+    oid = data["oid"]
+    query = "SELECT * FROM detections WHERE oid = '{}'".format(oid)
     try:
-        cur.execute(query,[id])
-        def generateResp():
-            while True:
-                resp = cur.fetchmany(20)
-                if not resp:
-                    break
+        cur.execute(query,[oid])
+        result = {
+            "oid" : oid,
+            "result" : {}
+        }
+        resp = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
+        alerts = []
+        for row in resp:
+            alert = dict(zip(colnames,row))
+            alerts.append(alert)
+        result["result"]["detections"] = alerts
+        return jsonify(result)
 
-                for row in resp:
-                    row = [str(i) for i in row]
-                    yield ",".join(row)+"\n"
-
-        return Response(stream_with_context(generateResp()), content_type='application/json')
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(id))
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database",500)
 
 
@@ -34,52 +37,65 @@ def get_detections():
 def get_non_detections():
     #Check query_parameters
     data = request.get_json(force=True)
-    if "id" not in data:
+    if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
-    id = data["id"]
-    query = "SELECT * FROM non_detections WHERE id = '{}'".format(id)
+    oid = data["oid"]
+    query = "SELECT * FROM non_detections WHERE oid = '{}'".format(oid)
     try:
-        cur.execute(query,[id])
-        def generateResp():
-            while True:
-                resp = cur.fetchmany(20)
-                if not resp:
-                    break
+        cur.execute(query,[oid])
+        result = {
+            "oid" : oid,
+            "result" : {}
+        }
+        resp = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
+        alerts = []
+        for row in resp:
+            alert = dict(zip(colnames,row))
+            alerts.append(alert)
+        result["result"]["non_detections"] = alerts
+        return jsonify(result)
 
-                for row in resp:
-                    row = [str(i) for i in row]
-                    yield ",".join(row)+"\n"
-
-        return Response(stream_with_context(generateResp()), content_type='application/json')
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(id))
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database",500)
 
 @objects_blueprint.route("/get_stats", methods=("POST",))
 def get_stats():
     #Check query_parameters
     data = request.get_json(force=True)
-    if "id" not in data:
+    if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
-    id = data["id"]
-    query = "SELECT * FROM objects WHERE id = '{}'".format(id)
+    oid = data["oid"]
+    query = "SELECT * FROM objects WHERE oid = '{}'".format(oid)
     try:
-        cur.execute(query,[id])
-        def generateResp():
-            while True:
-                resp = cur.fetchmany(20)
-                if not resp:
-                    break
+        cur.execute(query,[oid])
+        result = {
+            "oid" : oid,
+            "result" : {}
+        }
+        resp = cur.fetchone()
+        colnames = [desc[0] for desc in cur.description]
+        colmap = dict(zip(list(range(len(colnames))),colnames))
 
-                for row in resp:
-                    row = [str(i) for i in row]
-                    yield ",".join(row)+"\n"
+        obj = {}
+        for j,col in enumerate(resp):
+            if col == "id":
+                continue
+            if type(col) is float and col == float("inf"):
+                obj[colmap[j]] = 99.0
+            elif type(col) is float and math.isnan(col):
+                obj[colmap[j]] = None
+            else:
+                obj[colmap[j]] = col
+        result["result"]["stats"] = obj
+        return jsonify(result)
 
         return Response(stream_with_context(generateResp()), content_type='application/json')
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(id))
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database",500)
 
 
@@ -87,24 +103,48 @@ def get_stats():
 def get_probabilities():
     #Check query_parameters
     data = request.get_json(force=True)
-    if "id" not in data:
+    if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
-    id = data["id"]
-    query = "SELECT * FROM probabilities WHERE id = '{}'".format(id)
+    oid = data["oid"]
+    query = "SELECT * FROM probabilities WHERE oid = '{}'".format(oid)
     try:
-        cur.execute(query,[id])
-        def generateResp():
-            while True:
-                resp = cur.fetchmany(20)
-                if not resp:
-                    break
+        cur.execute(query,[oid])
+        result = {
+            "oid" : oid,
+            "result" : {}
+        }
+        resp = cur.fetchone()
+        colnames = [desc[0] for desc in cur.description]
 
-                for row in resp:
-                    row = [str(i) for i in row]
-                    yield ",".join(row)+"\n"
-
-        return Response(stream_with_context(generateResp()), content_type='application/json')
+        probs = dict(zip(colnames,resp))
+        result["result"]["probabilities"] = probs
+        return jsonify(result)
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(id))
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
+        return Response("Something went wrong quering the database",500)
+
+@objects_blueprint.route("/get_features", methods=("POST",))
+def get_features():
+    #Check query_parameters
+    data = request.get_json(force=True)
+    if "oid" not in data:
+        return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
+
+    oid = data["oid"]
+    query = "SELECT * FROM features WHERE oid = '{}'".format(oid)
+    try:
+        cur.execute(query,[oid])
+        result = {
+            "oid" : oid,
+            "result" : {}
+        }
+        resp = cur.fetchone()
+        colnames = [desc[0] for desc in cur.description]
+
+        features = dict(zip(colnames,resp))
+        result["result"]["probabilities"] = features
+        return jsonify(result)
+    except:
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database",500)
