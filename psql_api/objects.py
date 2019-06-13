@@ -7,13 +7,13 @@ objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
 def get_detections():
     #Check query_parameters
     data = request.get_json(force=True)
-    if "id" not in data:
+    if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
-    id = data["id"]
-    query = "SELECT * FROM detections WHERE id = '{}'".format(id)
+    oid = data["oid"]
+    query = "SELECT * FROM detections WHERE oid = '{}'".format(oid)
     try:
-        cur.execute(query,[id])
+        cur.execute(query,[oid])
         def generateResp():
             while True:
                 resp = cur.fetchmany(20)
@@ -26,7 +26,7 @@ def get_detections():
 
         return Response(stream_with_context(generateResp()), content_type='application/json')
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(id))
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database",500)
 
 
@@ -34,13 +34,13 @@ def get_detections():
 def get_non_detections():
     #Check query_parameters
     data = request.get_json(force=True)
-    if "id" not in data:
+    if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
-    id = data["id"]
-    query = "SELECT * FROM non_detections WHERE id = '{}'".format(id)
+    oid = data["oid"]
+    query = "SELECT * FROM non_detections WHERE oid = '{}'".format(oid)
     try:
-        cur.execute(query,[id])
+        cur.execute(query,[oid])
         def generateResp():
             while True:
                 resp = cur.fetchmany(20)
@@ -53,20 +53,20 @@ def get_non_detections():
 
         return Response(stream_with_context(generateResp()), content_type='application/json')
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(id))
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database",500)
 
 @objects_blueprint.route("/get_stats", methods=("POST",))
 def get_stats():
     #Check query_parameters
     data = request.get_json(force=True)
-    if "id" not in data:
+    if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
-    id = data["id"]
-    query = "SELECT * FROM objects WHERE id = '{}'".format(id)
+    oid = data["oid"]
+    query = "SELECT * FROM objects WHERE oid = '{}'".format(oid)
     try:
-        cur.execute(query,[id])
+        cur.execute(query,[ooid])
         def generateResp():
             while True:
                 resp = cur.fetchmany(20)
@@ -79,7 +79,7 @@ def get_stats():
 
         return Response(stream_with_context(generateResp()), content_type='application/json')
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(id))
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database",500)
 
 
@@ -87,13 +87,13 @@ def get_stats():
 def get_probabilities():
     #Check query_parameters
     data = request.get_json(force=True)
-    if "id" not in data:
+    if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
-    id = data["id"]
-    query = "SELECT * FROM probabilities WHERE id = '{}'".format(id)
+    oid = data["oid"]
+    query = "SELECT * FROM probabilities WHERE oid = '{}'".format(oid)
     try:
-        cur.execute(query,[id])
+        cur.execute(query,[oid])
         def generateResp():
             while True:
                 resp = cur.fetchmany(20)
@@ -106,5 +106,5 @@ def get_probabilities():
 
         return Response(stream_with_context(generateResp()), content_type='application/json')
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(id))
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database",500)

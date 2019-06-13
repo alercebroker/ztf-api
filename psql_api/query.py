@@ -127,7 +127,7 @@ def query():
             colnames = [desc[0] for desc in cur.description]
             colmap = dict(zip(list(range(len(colnames))),colnames))
             for i in range(len(colnames)):
-                if colmap[i] == "id":
+                if colmap[i] == "oid":
                     idPosition = i
                     break
             for row in resp:
@@ -136,7 +136,12 @@ def query():
                     current_app.logger.debug("{}:{}:{}".format(type(col),col, col == float("inf")))
                     if col == "id":
                         continue
-                    obj[colmap[j]] = None if (type(col) is float ) and ((math.isnan(col)) or (col == float("inf"))) else col
+                    if type(col) is float and col == float("inf"):
+                        obj[colmap[j]] = 99.0
+                    elif type(col) is float and math.isnan(col):
+                        obj[colmap[j]] = None
+                    else:
+                        obj[colmap[j]] = col
                 result["result"][row[idPosition]] = obj
         cur.close()
         return result
