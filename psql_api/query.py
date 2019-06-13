@@ -3,6 +3,7 @@ from .app import config
 from flask import Response,stream_with_context,request,Blueprint,current_app,g
 
 from astropy import units as u
+import numpy as np
 
 query_blueprint = Blueprint('query', __name__, template_folder='templates')
 
@@ -18,6 +19,11 @@ def query():
     data = request.get_json(force=True)
     if "query_parameters" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
+
+    records_per_pages = int(data["records_per_pages"]) if "records_per_pages" in data else 20
+    page = int(data["page"]) if "page" in data else 1
+    row_number = int(data["total"]) if "total" in data else None
+    num_pages = np.ceil(row_number/records_per_pages).astype(np.int) if "total" in data else None
 
     sql = "SELECT * FROM objects"
 
@@ -81,21 +87,30 @@ def query():
                 if len(filters) > 1 and i != len(filters)-1:
                     sql+= " AND "
 
-    sql += " ORDER BY oid "
 
     current_app.logger.debug(sql)
     connection  = psql_pool.getconn()
+    if row_number is None:
+        cur = connection.cursor(name="ALERCE Big Query Counter Cursor")
+        current_app.logger.debug(sql.replace("*","COUNT(*)"))
+        cur.execute(sql.replace("*","COUNT(*)"))
+        row_number = cur.fetchone()[0]
+        num_pages = np.ceil(row_number/records_per_pages).astype(np.int)
+        cur.close()
+
+    sql += " ORDER BY oid OFFSET {} LIMIT {} ".format(page*records_per_pages, records_per_pages)
     cur = connection.cursor(name="ALERCE Big Query Cursor")
     cur.execute(sql)
-    rowcount = cur.rowcount
-
-    current_app.logger.debug("Rows Returned:{}".format(rowcount))
+    current_app.logger.debug("Rows Returned:{}".format(row_number))
     def generateResp():
         colnames = None
         yield """
             {
+                "total": %d,
+                "num_pages": %d,
+                "page": %d,
                 "result" : {
-        """
+        """ % (row_number,num_pages, page)
         while True:
             resp = cur.fetchmany(20)
             if colnames is None:
@@ -117,5 +132,6 @@ def query():
                     obj[colmap[j]] = col
                 yield "{},".format(str(obj).replace("None","null"))
         yield "}\n"
+        cur.close()
 
     return Response(stream_with_context(generateResp()), content_type='application/json')
