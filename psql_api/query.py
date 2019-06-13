@@ -1,6 +1,6 @@
 from psycopg2 import pool
 from .app import config
-from flask import Response,stream_with_context,request,Blueprint,current_app,g
+from flask import Response,stream_with_context,request,Blueprint,current_app,g,jsonify
 
 from astropy import units as u
 import numpy as np
@@ -103,7 +103,7 @@ def query():
         current_app.logger.debug(sql.replace("*","COUNT(*)"))
         cur.execute(sql.replace("*","COUNT(*)"))
         row_number = cur.fetchone()[0]
-        num_pages = np.ceil(row_number/records_per_pages).astype(np.int)
+        num_pages = int(np.ceil(row_number/records_per_pages))
         cur.close()
 
     sql += " ORDER BY oid OFFSET {} LIMIT {} ".format((page-1)*records_per_pages, records_per_pages)
@@ -115,35 +115,28 @@ def query():
     #Generating json response
     def generateResp():
         colnames = None
-        yield """
-            {
-                "total": %d,
-                "num_pages": %d,
-                "page": %d,
-                "result" : {
-        """ % (row_number,num_pages, page)
-        while True:
-            #Fetching 20 for eac time
-            resp = cur.fetchmany(20)
-            if colnames is None:
-                colnames = [desc[0] for desc in cur.description]
-                colmap = dict(zip(list(range(len(colnames))),colnames))
-                for i in range(len(colnames)):
-                    if colmap[i] == "id":
-                        idPosition = i
-                        break
-            if not resp:
-                break
-
-            obj = {}
+        result = {
+                "total":row_number,
+                "num_pages": num_pages,
+                "page": page,
+                "result" : {}
+        }
+        resp = cur.fetchall()
+        if colnames is None:
+            colnames = [desc[0] for desc in cur.description]
+            colmap = dict(zip(list(range(len(colnames))),colnames))
+            for i in range(len(colnames)):
+                if colmap[i] == "id":
+                    idPosition = i
+                    break
             for row in resp:
-                yield '"{}":'.format(row[idPosition])
+                obj = {}
                 for j,col in enumerate(row):
                     if col == "id":
                         continue
                     obj[colmap[j]] = col
-                yield "{},".format(str(obj).replace("None","null"))
-        yield "}\n"
+                result["result"][row[idPosition]] = obj
         cur.close()
+        return result
 
-    return Response(stream_with_context(generateResp()), content_type='application/json')
+    return jsonify(generateResp())
