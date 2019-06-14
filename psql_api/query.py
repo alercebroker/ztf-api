@@ -119,13 +119,11 @@ def query():
         row_number = cur.fetchone()[0]
         num_pages = int(np.ceil(row_number/records_per_pages))
         cur.close()
-
+    sql += " ORDER BY oid DESC OFFSET {} LIMIT {} ".format((page-1)*records_per_pages, records_per_pages)
     cur = connection.cursor(name="ALERCE Big Query Cursor")
     current_app.logger.debug(sql)
     cur.execute(sql)
     current_app.logger.debug("Rows Returned:{}".format(row_number))
-
-    sql += " ORDER BY nobs DESC"
     #Generating json response
     def generateResp():
         colnames = None
