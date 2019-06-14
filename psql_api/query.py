@@ -18,6 +18,7 @@ def parse_filters(data):
     #Base SQL statement
     sql = "SELECT * FROM objects"
 
+    where = False
     #Iterating over filters
     if "filters" in data["query_parameters"]:
         filters = data["query_parameters"]["filters"]
@@ -26,6 +27,7 @@ def parse_filters(data):
         #where statement
         if len(filters) > 0:
             sql += " WHERE "
+            where = True
 
             #Adding filter statement
             for i,filter in enumerate(filters):
@@ -75,25 +77,28 @@ def parse_filters(data):
                             if "max" in deltajd_filter:
                                 sql += " deltajd <= {}".format(deltajd_filter["max"])
 
-                #Coordinates Filter
-                if "coordinates" == filter:
-                    if "ra" not in filters["coordinates"] or "dec" not in filters["coordinates"] or "rs" not in filters["coordinates"]:
-                        return Response('{"status": "error", "text": "Malformed Coordinates parameters"}\n', 400)
-
-                    #Transorming to degrees
-                    arcsec = float(filters["coordinates"]["rs"]) * u.arcsec
-                    deg = arcsec.to(u.deg)
-                    deg = deg.value
-
-                    ra = float(filters["coordinates"]["ra"])
-                    dec = float(filters["coordinates"]["dec"])
-
-                    #Adding "Square" coordinates filter
-                    sql += " meanra BETWEEN {} AND {} AND meandec BETWEEN {} AND {}".format(ra-deg,ra+deg,dec-deg,dec+deg)
 
                 #If there are more filters add AND statement
                 if len(filters) > 1 and i != len(filters)-1:
                     sql+= " AND "
+    if "coordinates" in data["query_parameters"]:
+        if not where:
+            sql += " WHERE "
+        #Coordinates Filter
+        if "ra" not in filters["coordinates"] or "dec" not in filters["coordinates"] or "rs" not in filters["coordinates"]:
+            return Response('{"status": "error", "text": "Malformed Coordinates parameters"}\n', 400)
+
+        #Transorming to degrees
+        arcsec = float(filters["coordinates"]["rs"]) * u.arcsec
+        deg = arcsec.to(u.deg)
+        deg = deg.value
+
+        ra = float(filters["coordinates"]["ra"])
+        dec = float(filters["coordinates"]["dec"])
+
+        #Adding "Square" coordinates filter
+        sql += " meanra BETWEEN {} AND {} AND meandec BETWEEN {} AND {}".format(ra-deg,ra+deg,dec-deg,dec+deg)
+
     return sql
 
 @query_blueprint.route("/query",methods=("POST",))
