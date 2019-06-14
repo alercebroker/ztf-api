@@ -23,7 +23,7 @@ def get_detections():
         colnames = [desc[0] for desc in cur.description]
         alerts = []
         for row in resp:
-            alert = dict(zip(colnames,row))
+            alert = dict(zip(colnames,row)) if row else None
             alerts.append(alert)
         result["result"]["detections"] = alerts
         return jsonify(result)
@@ -52,7 +52,7 @@ def get_non_detections():
         colnames = [desc[0] for desc in cur.description]
         alerts = []
         for row in resp:
-            alert = dict(zip(colnames,row))
+            alert = dict(zip(colnames,row)) if row else None
             alerts.append(alert)
         result["result"]["non_detections"] = alerts
         return jsonify(result)
@@ -117,7 +117,7 @@ def get_probabilities():
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
 
-        probs = dict(zip(colnames,resp))
+        probs = dict(zip(colnames,resp)) if resp else None
         result["result"]["probabilities"] = probs
         return jsonify(result)
     except:
@@ -141,8 +141,7 @@ def get_features():
         }
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
-
-        features = dict(zip(colnames,resp))
+        features = dict(zip(colnames,resp)) if resp else None
         result["result"]["period"] = features
         return jsonify(result)
     except:
