@@ -93,7 +93,7 @@ def parse_filters(data):
 
                 #If there are more filters add AND statement
                 if len(filters) > 1 and i != len(filters)-1:
-                    sql+= " AND "    
+                    sql+= " AND "
     return sql
 
 @query_blueprint.route("/query",methods=("POST",))
@@ -158,7 +158,10 @@ def query():
         cur.close()
         return result
 
-    return jsonify(generateResp())
+        
+    result = generateResp()
+    psql_pool.putconn(connection)
+    return jsonify(result)
 
 @query_blueprint.route("/get_sql",methods=("POST",))
 def get_sql():
@@ -166,4 +169,3 @@ def get_sql():
     if "query_parameters" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
     return parse_filters(data)
-    
