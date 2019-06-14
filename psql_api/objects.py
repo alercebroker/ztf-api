@@ -85,7 +85,7 @@ def get_stats():
             if col == "id":
                 continue
             if type(col) is float and col == float("inf"):
-                obj[colmap[j]] = 99.0
+                obj[colmap[j]] = None#99.0
             elif type(col) is float and math.isnan(col):
                 obj[colmap[j]] = None
             else:
