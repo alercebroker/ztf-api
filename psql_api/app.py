@@ -3,6 +3,7 @@ import configparser
 from psycopg2 import connect
 from flask_cors import CORS
 from flask import Flask
+import logging
 #Reading Config File
 filePath = os.path.dirname(os.path.abspath(__file__))
 configPath = os.path.join(filePath,"..","config")
