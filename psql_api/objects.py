@@ -134,7 +134,7 @@ def get_features():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT periodls_1, periodls_2 FROM features WHERE oid = '{}'".format(oid)
+    query = "SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM features WHERE oid = '{}'".format(oid)
     try:
         cur.execute(query,[oid])
         result = {
@@ -147,6 +147,11 @@ def get_features():
             result["result"]["period"] = {}
             return jsonify(result)
         features = dict(zip(colnames,resp))
+        if features["n_samples_1"] > features["n_samples_2"]:
+            features["periodls_2"] = features["periodls_1"]
+        else:
+            features["periodls_1"] = features["periodls_2"]
+
         result["result"]["period"] = features
         return jsonify(result)
     except:
