@@ -1,5 +1,5 @@
 server {
-    listen 8084;
+    listen 8085;
     server_name alerce.online www.alerce.online;
 
     location /searches {
