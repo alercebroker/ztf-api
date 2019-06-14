@@ -1,7 +1,8 @@
 import os
 import configparser
 from psycopg2 import connect
-
+from flask_cors import CORS
+from flask import Flask
 #Reading Config File
 filePath = os.path.dirname(os.path.abspath(__file__))
 configPath = os.path.join(filePath,"..","config")
@@ -9,8 +10,8 @@ config = configparser.ConfigParser()
 config.read(os.path.join(configPath,"config.ini"))
 
 #Starting Flask API
-from flask import Flask
 app = Flask(__name__)
+CORS(app)
 is_gunicorn = "gunicorn" in os.environ.get("SERVER_SOFTWARE", "")
 if is_gunicorn:
     gunicorn_logger = logging.getLogger('gunicorn.error')
