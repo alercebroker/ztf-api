@@ -147,7 +147,7 @@ def query():
                     if col == "id":
                         continue
                     if type(col) is float and col == float("inf"):
-                        obj[colmap[j]] = 99.0
+                        obj[colmap[j]] = None#99.0
                     elif type(col) is float and math.isnan(col):
                         obj[colmap[j]] = None
                     else:
@@ -156,7 +156,6 @@ def query():
         cur.close()
         return result
 
-        
     result = generateResp()
     psql_pool.putconn(connection)
     return jsonify(result)

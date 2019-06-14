@@ -85,7 +85,7 @@ def get_stats():
             if col == "id":
                 continue
             if type(col) is float and col == float("inf"):
-                obj[colmap[j]] = 99.0
+                obj[colmap[j]] = None#99.0
             elif type(col) is float and math.isnan(col):
                 obj[colmap[j]] = None
             else:
@@ -116,8 +116,10 @@ def get_probabilities():
         }
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
-
-        probs = dict(zip(colnames,resp)) if resp else None
+        if resp is None:
+            result["result"]["probabilities"] = {}
+            return jsonify(result)
+        probs = dict(zip(colnames,resp))
         result["result"]["probabilities"] = probs
         return jsonify(result)
     except:
@@ -132,7 +134,7 @@ def get_features():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT period_fit_1, period_fit_2 FROM features WHERE oid = '{}'".format(oid)
+    query = "SELECT periodls_1, periodls_2 FROM features WHERE oid = '{}'".format(oid)
     try:
         cur.execute(query,[oid])
         result = {
@@ -141,7 +143,10 @@ def get_features():
         }
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
-        features = dict(zip(colnames,resp)) if resp else None
+        if resp is None:
+            result["result"]["period"] = {}
+            return jsonify(result)
+        features = dict(zip(colnames,resp))
         result["result"]["period"] = features
         return jsonify(result)
     except:
