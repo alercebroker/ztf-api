@@ -116,7 +116,7 @@ def get_probabilities():
         }
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
-        if len(resp) == 0:
+        if resp is None:
             result["result"]["probabilities"] = {}
             return jsonify(result)
         probs = dict(zip(colnames,resp))
@@ -143,7 +143,7 @@ def get_features():
         }
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
-        if len(resp) == 0:
+        if resp is None:
             result["result"]["period"] = {}
             return jsonify(result)
         features = dict(zip(colnames,resp))
