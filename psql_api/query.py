@@ -14,19 +14,7 @@ psql_pool = pool.SimpleConnectionPool(1, 20,user = config["DATABASE"]["User"],
                                               port = config["DATABASE"]["Port"],
                                               database = config["DATABASE"]["Database"])
 
-@query_blueprint.route("/query",methods=("POST",))
-def query():
-    #Check query_parameters
-    data = request.get_json(force=True)
-    if "query_parameters" not in data:
-        return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
-
-    #Checking other parameters
-    records_per_pages = int(data["records_per_pages"]) if "records_per_pages" in data else 20
-    page = int(data["page"]) if "page" in data else 1
-    row_number = int(data["total"]) if "total" in data else None
-    num_pages = int(np.ceil(row_number/records_per_pages)) if "total" in data else None
-
+def parse_filters(data):
     #Base SQL statement
     sql = "SELECT * FROM objects"
 
@@ -41,7 +29,6 @@ def query():
 
             #Adding filter statement
             for i,filter in enumerate(filters):
-
                 #OID Filter
                 if "oid" == filter:
                     sql += " oid='{}'".format(filters["oid"] )
@@ -53,6 +40,17 @@ def query():
                         sql += " AND "
                     if "max" in filters["nobs"]:
                         sql += " nobs <= {}".format(filters["nobs"]["max"])
+                # CLASS FILTER
+                if filter.startswith("class"):
+                    if "classified" == filters[filter]:
+                        sql += " {} is not null".format(filter)
+                    if "not classified" == filters[filter]:
+                        sql += " {} is null".format(filter)
+                    if isinstance(filters[filter], int):
+                        sql += " {} = {}".format(filter, filters[filter])
+                if filter.startswith("pclass"):
+                    sql += " {} >= {}".format(filter, filters[filter])
+                print ("SQL",sql)
                 #DATES FILTER
                 if "dates" == filter:
                     for j,field in enumerate(filters["dates"]):
@@ -95,8 +93,23 @@ def query():
 
                 #If there are more filters add AND statement
                 if len(filters) > 1 and i != len(filters)-1:
-                    sql+= " AND "
+                    sql+= " AND "    
+    return sql
 
+@query_blueprint.route("/query",methods=("POST",))
+def query():
+    #Check query_parameters
+    data = request.get_json(force=True)
+    if "query_parameters" not in data:
+        return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
+
+    #Checking other parameters
+    records_per_pages = int(data["records_per_pages"]) if "records_per_pages" in data else 20
+    page = int(data["page"]) if "page" in data else 1
+    row_number = int(data["total"]) if "total" in data else None
+    num_pages = int(np.ceil(row_number/records_per_pages)) if "total" in data else None
+
+    sql = parse_filters(data)
 
     connection  = psql_pool.getconn()
     if row_number is None:
@@ -107,12 +120,12 @@ def query():
         num_pages = int(np.ceil(row_number/records_per_pages))
         cur.close()
 
-    sql += " ORDER BY oid OFFSET {} LIMIT {} ".format((page-1)*records_per_pages, records_per_pages)
     cur = connection.cursor(name="ALERCE Big Query Cursor")
     current_app.logger.debug(sql)
     cur.execute(sql)
     current_app.logger.debug("Rows Returned:{}".format(row_number))
 
+    sql += " ORDER BY nobs DESC"
     #Generating json response
     def generateResp():
         colnames = None
@@ -146,3 +159,11 @@ def query():
         return result
 
     return jsonify(generateResp())
+
+@query_blueprint.route("/get_sql",methods=("POST",))
+def get_sql():
+    data = request.get_json(force=True)
+    if "query_parameters" not in data:
+        return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
+    return parse_filters(data)
+    

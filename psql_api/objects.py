@@ -1,5 +1,5 @@
 from .app import cur
-from flask import Blueprint,Response,current_app,request,jsonify
+from flask import Blueprint,Response,current_app,request,jsonify, stream_with_context
 import math
 
 objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
@@ -132,7 +132,7 @@ def get_features():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT * FROM features WHERE oid = '{}'".format(oid)
+    query = "SELECT period_fit_1, period_fit_2 FROM features WHERE oid = '{}'".format(oid)
     try:
         cur.execute(query,[oid])
         result = {
@@ -143,7 +143,7 @@ def get_features():
         colnames = [desc[0] for desc in cur.description]
 
         features = dict(zip(colnames,resp))
-        result["result"]["probabilities"] = features
+        result["result"]["period"] = features
         return jsonify(result)
     except:
         current_app.logger.exception("Error getting detections from ({})".format(oid))
