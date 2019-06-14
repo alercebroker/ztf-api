@@ -156,7 +156,6 @@ def query():
         cur.close()
         return result
 
-        
     result = generateResp()
     psql_pool.putconn(connection)
     return jsonify(result)
