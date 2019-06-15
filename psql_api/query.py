@@ -84,6 +84,9 @@ def parse_filters(data):
     if "coordinates" in data["query_parameters"]:
         if not where:
             sql += " WHERE "
+        else:
+            sql += " AND "
+        filters = data["query_parameters"]
         #Coordinates Filter
         if "ra" not in filters["coordinates"] or "dec" not in filters["coordinates"] or "rs" not in filters["coordinates"]:
             return Response('{"status": "error", "text": "Malformed Coordinates parameters"}\n', 400)
