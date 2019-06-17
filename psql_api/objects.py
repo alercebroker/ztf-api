@@ -23,6 +23,10 @@ def get_detections():
         colnames = [desc[0] for desc in cur.description]
         alerts = []
         for row in resp:
+            row = list(row)
+            for j in range(len(row)):
+                if type(row[j]) is float and math.isnan(row[j]):
+                    row[j] = None
             alert = dict(zip(colnames,row)) if row else None
             alerts.append(alert)
         result["result"]["detections"] = alerts
