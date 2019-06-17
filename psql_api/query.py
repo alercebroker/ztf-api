@@ -117,7 +117,10 @@ def query():
     row_number = int(data["total"]) if "total" in data else None
     num_pages = int(np.ceil(row_number/records_per_pages)) if "total" in data else None
     sort_by = data["sortBy"] if "sortBy" in data else "nobs"
-    sort_desc = data["sortDesc"] if "sortDesc" in data and data["sortDesc"] else "DESC"
+    if "sortDesc" in data:
+        sort_desc = "DESC" if data["sortDesc"] else "ASC"
+    else:
+        sort_desc = "DESC"
     sql = parse_filters(data)
 
     connection  = psql_pool.getconn()
