@@ -116,7 +116,8 @@ def query():
     page = int(data["page"]) if "page" in data else 1
     row_number = int(data["total"]) if "total" in data else None
     num_pages = int(np.ceil(row_number/records_per_pages)) if "total" in data else None
-
+    sort_by = data["sortBy"] if "sortBy" in data else "nobs"
+    sort_desc = "DESC" if "sortDesc" in data and data["sortDesc"] else "ASC"
     sql = parse_filters(data)
 
     connection  = psql_pool.getconn()
@@ -127,7 +128,7 @@ def query():
         row_number = cur.fetchone()[0]
         num_pages = int(np.ceil(row_number/records_per_pages))
         cur.close()
-    sql += " ORDER BY nobs DESC OFFSET {} LIMIT {} ".format((page-1)*records_per_pages, records_per_pages)
+    sql += " ORDER BY {} {} OFFSET {} LIMIT {} ".format(sort_by,sort_desc,(page-1)*records_per_pages, records_per_pages)
     cur = connection.cursor(name="ALERCE Big Query Cursor")
     current_app.logger.debug(sql)
     cur.execute(sql)
