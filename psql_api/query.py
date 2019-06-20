@@ -104,7 +104,7 @@ def parse_filters(data):
                 sql += " firstmjd >= {}".format(filters["dates"]["firstmjd"])
 
             if field == "lastmjd":
-                sql += " lastmjd <= {}".format(filters["dates"]["lastmjd"])
+                sql += " firstmjd <= {}".format(filters["dates"]["lastmjd"])
 
             #Adding AND if neccesary
             if len(filters["dates"]) > 1 and j != len(filters["dates"])-1:
