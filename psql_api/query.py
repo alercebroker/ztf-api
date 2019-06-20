@@ -53,30 +53,6 @@ def parse_filters(data):
                 if filter.startswith("pclass"):
                     sql += " {} >= {}".format(filter, filters[filter])
                 print ("SQL",sql)
-                #DATES FILTER
-                if "dates" == filter:
-                    for j,field in enumerate(filters["dates"]):
-                        #Julian date filter
-                        if field == "firstjd":
-                            sql += " firstmjd >= {}".format(filters["dates"]["firstjd"])
-
-                        if field == "lastjd":
-                            sql += " lastmjd <= {}".format(filters["dates"]["lastjd"])
-
-                        #Adding AND if neccesary
-                        if len(filters["dates"]) > 1 and j != len(filters["dates"])-1:
-                            sql += " AND "
-
-                        #Adding deltajd filter
-                        if field == "deltajd":
-                            deltajd_filter = filters["dates"]["deltajd"]
-                            if "min" in deltajd_filter:
-                                sql += " deltajd >= {}".format(deltajd_filter["min"])
-                            if len(deltajd_filter) == 2:
-                                sql += " AND "
-                            if "max" in deltajd_filter:
-                                sql += " deltajd <= {}".format(deltajd_filter["max"])
-
 
                 #If there are more filters add AND statement
                 if len(filters) > 1 and i != len(filters)-1:
@@ -84,6 +60,7 @@ def parse_filters(data):
     if "coordinates" in data["query_parameters"]:
         if not where:
             sql += " WHERE "
+            where = True
         else:
             sql += " AND "
         filters = data["query_parameters"]
@@ -101,6 +78,48 @@ def parse_filters(data):
 
         #Adding "Square" coordinates filter
         sql += " meanra BETWEEN {} AND {} AND meandec BETWEEN {} AND {}".format(ra-deg,ra+deg,dec-deg,dec+deg)
+
+    if "dates" in data["query_parameters"]:
+        if not where:
+            sql += " WHERE "
+            where = True
+        else:
+            sql += " AND "
+        filters = {"dates": {}}
+        if "firstmjd" in data["query_parameters"]["dates"]:
+            filters["dates"]["firstmjd"] = data["query_parameters"]["dates"]["firstmjd"]
+        if "lastmjd" in data["query_parameters"]["dates"]:
+            filters["dates"]["lastmjd"] = data["query_parameters"]["dates"]["lastmjd"]
+        if "deltajd" in data["query_parameters"]["dates"]:
+            filters["dates"]["lastmjd"] = data["query_parameters"]["dates"]["lastmjd"]
+
+
+
+
+        #DATES FILTER
+        for j,field in enumerate(filters["dates"]):
+            current_app.logger.debug(field)
+            #Julian date filter
+            if field == "firstmjd":
+                sql += " firstmjd >= {}".format(filters["dates"]["firstmjd"])
+
+            if field == "lastmjd":
+                sql += " lastmjd <= {}".format(filters["dates"]["lastmjd"])
+
+            #Adding AND if neccesary
+            if len(filters["dates"]) > 1 and j != len(filters["dates"])-1:
+                sql += " AND "
+
+            #Adding deltajd filter
+            if field == "deltajd":
+                deltajd_filter = filters["dates"]["deltajd"]
+                if "min" in deltajd_filter:
+                    sql += " deltajd >= {}".format(deltajd_filter["min"])
+                if len(deltajd_filter) == 2:
+                    sql += " AND "
+                if "max" in deltajd_filter:
+                    sql += " deltajd <= {}".format(deltajd_filter["max"])
+
 
     return sql
 
