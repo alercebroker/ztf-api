@@ -83,7 +83,7 @@ def get_stats():
         }
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
-        colmap = dict(zip(list(range(len(colnames))),colnames))
+        colmap = dict(zip(list(range(len(colnames))), colnames))
 
         obj = {}
         for j,col in enumerate(resp):
@@ -124,15 +124,16 @@ def get_probabilities():
         resp_prob = cur.fetchone()
         column_prob = [desc[0] for desc in cur.description]
     except:
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         resp_prob = "fail"
     try:
         cur.execute(query_stamp, [oid])
         resp_stamp = cur.fetchone()
         column_stamp = [desc[0] for desc in cur.description]
     except:
+        current_app.logger.exception("Error getting detections from ({})".format(oid))
         resp_stamp = "fail"
     if resp_prob == "fail" and resp_stamp == "fail":
-        current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
     else:
         if resp_prob is None or resp_prob == "fail":
