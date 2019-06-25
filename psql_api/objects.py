@@ -139,15 +139,15 @@ def get_probabilities():
         return Response("Something went wrong quering the database", 500)
     else:
         if resp_prob is None or resp_prob == "fail":
-            result["result"]["random_forest"] = {}
+            result["result"]["probabilities"]["random_forest"] = {}
         else:
             probs_prob = dict(zip(column_prob, resp_prob))
-            result["result"]["random_forest"] = probs_prob
+            result["result"]["probabilities"]["random_forest"] = probs_prob
         if resp_stamp is None or resp_stamp == "fail":
-            result["result"]["early_classifier"] = {}
+            result["result"]["probabilities"]["early_classifier"] = {}
         else:
             probs_stamp = dict(zip(column_stamp, resp_stamp))
-            result["result"]["early_classifier"] = probs_stamp
+            result["result"]["probabilities"]["early_classifier"] = probs_stamp
         return jsonify(result)
 
 
