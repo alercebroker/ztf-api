@@ -115,7 +115,7 @@ def get_probabilities():
     result = {
         "oid": oid,
         "result": {
-            "probabilities"{
+            "probabilities": {
                 "random_forest": {},
                 "early_classifier": {}
             }
