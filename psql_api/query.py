@@ -67,21 +67,12 @@ def parse_filters(data):
     if "dates" in data["query_parameters"]:
         filters = {"dates": {}}
         if "firstmjd" in data["query_parameters"]["dates"]:
-            filters["dates"]["firstmjd"] = data["query_parameters"]["dates"]["firstmjd"]
-        if "lastmjd" in data["query_parameters"]["dates"]:
-            filters["dates"]["lastmjd"] = data["query_parameters"]["dates"]["lastmjd"]
-        if "deltajd" in data["query_parameters"]["dates"]:
-            filters["dates"]["lastmjd"] = data["query_parameters"]["dates"]["lastmjd"]
+            firstmjd = data["query_parameters"]["dates"]["firstmjd"]
 
-        #DATES FILTER
-        for j,field in enumerate(filters["dates"]):
-            current_app.logger.debug(field)
-            #Julian date filter
-            if field == "firstmjd":
-                sql_filters.append(" firstmjd >= {}".format(filters["dates"]["firstmjd"]))
-
-            if field == "lastmjd":
-                sql_filters.append(" firstmjd <= {}".format(filters["dates"]["lastmjd"]))
+            if "min" in firstmjd:
+                sql_filters.append( " firstmjd >= {} ".format(firstmjd["min"]) )
+            if "max" in firstmjd:
+                sql_filters.append( " firstmjd <= {} ".format(firstmjd["max"]) )
 
     #If there are filters add to sql
     if len(sql_filters) > 0:
@@ -89,115 +80,6 @@ def parse_filters(data):
         sql += " WHERE {}".format(sql_filters_str)
 
     return sql
-
-# def parse_filters(data):
-#     #Base SQL statement
-#     sql = "SELECT * FROM objects"
-#
-#     where = False
-#     #Iterating over filters
-#     if "filters" in data["query_parameters"]:
-#         filters = data["query_parameters"]["filters"]
-#
-#         #If there are filters add
-#         #where statement
-#         if len(filters) > 0:
-#             sql += " WHERE "
-#             where = True
-#
-#             #Adding filter statement
-#             for i,filter in enumerate(filters):
-#                 #OID Filter
-#                 if "oid" == filter:
-#                     sql += " oid='{}'".format(filters["oid"] )
-#                 #NOBS Filter
-#                 if "nobs" == filter:
-#                     if "min" in filters["nobs"]:
-#                         sql += " nobs >= {}".format(filters["nobs"]["min"])
-#                     if len(filters["nobs"]) == 2:
-#                         sql += " AND "
-#                     if "max" in filters["nobs"]:
-#                         sql += " nobs <= {}".format(filters["nobs"]["max"])
-#                 # CLASS FILTER
-#                 if filter.startswith("class"):
-#                     if "classified" == filters[filter]:
-#                         sql += " {} is not null".format(filter)
-#                     if "not classified" == filters[filter]:
-#                         sql += " {} is null".format(filter)
-#                     if isinstance(filters[filter], int):
-#                         sql += " {} = {}".format(filter, filters[filter])
-#                 if filter.startswith("pclass"):
-#                     sql += " {} >= {}".format(filter, filters[filter])
-#                 print ("SQL",sql)
-#
-#                 #If there are more filters add AND statement
-#                 if len(filters) > 1 and i != len(filters)-1:
-#                     sql+= " AND "
-#     if "coordinates" in data["query_parameters"]:
-#         if not where:
-#             sql += " WHERE "
-#             where = True
-#         else:
-#             sql += " AND "
-#         filters = data["query_parameters"]
-#         #Coordinates Filter
-#         if "ra" not in filters["coordinates"] or "dec" not in filters["coordinates"] or "rs" not in filters["coordinates"]:
-#             return Response('{"status": "error", "text": "Malformed Coordinates parameters"}\n', 400)
-#
-#         #Transorming to degrees
-#         arcsec = float(filters["coordinates"]["rs"]) * u.arcsec
-#         deg = arcsec.to(u.deg)
-#         deg = deg.value
-#
-#         ra = float(filters["coordinates"]["ra"])
-#         dec = float(filters["coordinates"]["dec"])
-#
-#         #Adding "Square" coordinates filter
-#         sql += " meanra BETWEEN {} AND {} AND meandec BETWEEN {} AND {}".format(ra-deg,ra+deg,dec-deg,dec+deg)
-#
-#     if "dates" in data["query_parameters"]:
-#         if not where:
-#             sql += " WHERE "
-#             where = True
-#         else:
-#             sql += " AND "
-#         filters = {"dates": {}}
-#         if "firstmjd" in data["query_parameters"]["dates"]:
-#             filters["dates"]["firstmjd"] = data["query_parameters"]["dates"]["firstmjd"]
-#         if "lastmjd" in data["query_parameters"]["dates"]:
-#             filters["dates"]["lastmjd"] = data["query_parameters"]["dates"]["lastmjd"]
-#         if "deltajd" in data["query_parameters"]["dates"]:
-#             filters["dates"]["lastmjd"] = data["query_parameters"]["dates"]["lastmjd"]
-#
-#
-#
-#
-#         #DATES FILTER
-#         for j,field in enumerate(filters["dates"]):
-#             current_app.logger.debug(field)
-#             #Julian date filter
-#             if field == "firstmjd":
-#                 sql += " firstmjd >= {}".format(filters["dates"]["firstmjd"])
-#
-#             if field == "lastmjd":
-#                 sql += " firstmjd <= {}".format(filters["dates"]["lastmjd"])
-#
-#             #Adding AND if neccesary
-#             if len(filters["dates"]) > 1 and j != len(filters["dates"])-1:
-#                 sql += " AND "
-#
-#             #Adding deltajd filter
-#             if field == "deltajd":
-#                 deltajd_filter = filters["dates"]["deltajd"]
-#                 if "min" in deltajd_filter:
-#                     sql += " deltajd >= {}".format(deltajd_filter["min"])
-#                 if len(deltajd_filter) == 2:
-#                     sql += " AND "
-#                 if "max" in deltajd_filter:
-#                     sql += " deltajd <= {}".format(deltajd_filter["max"])
-#
-#
-#     return sql
 
 @query_blueprint.route("/query",methods=("POST",))
 def query():
