@@ -17,11 +17,11 @@ psql_pool = pool.SimpleConnectionPool(1, 20,user = config["DATABASE"]["User"],
 
 def map_classes(class_id,table):
     stamp = {
-        0: "AGN",
-        1: "SN",
-        2: "VS",
-        3: "asteroid",
-        4: "bogus"
+        1: "AGN",
+        2: "SN",
+        3: "VS",
+        4: "asteroid",
+        5: "bogus"
     }
     rf = {
         "CEPH": 1,
@@ -34,12 +34,12 @@ def map_classes(class_id,table):
     }
 
     if table == "stamp":
-        if type(class_id) is int:
+        if type(class_id) is int or class_id.isnumeric():
             return stamp[class_id]
         else:
             return class_id
     if table == "rf_xmatch":
-        if type(class_id) is str:
+        if type(class_id) is str or not class_id.isnumeric():
             return rf[class_id]
         else:
             return class_id
