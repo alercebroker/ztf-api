@@ -15,6 +15,39 @@ psql_pool = pool.SimpleConnectionPool(1, 20,user = config["DATABASE"]["User"],
                                               database = config["DATABASE"]["Database"])
 
 
+def map_classes(class_id,table):
+    stamp = {
+        0: "AGN",
+        1: "SN",
+        2: "VS",
+        3: "asteroid",
+        4: "bogus"
+    }
+    rf = {
+        "CEPH": 1,
+        "DSCT": 2,
+        "EB": 3,
+        "LPV":4,
+        "RRL":5,
+        "SNe":6,
+        "Other":0
+    }
+
+    if table == "stamp":
+        if type(class_id) is int:
+            return stamp[class_id]
+        else:
+            return class_id
+    if table == "rf_xmatch":
+        if type(class_id) is str:
+            return rf[class_id]
+        else:
+            return class_id
+
+
+
+
+
 def parse_filters(data):
     #Base SQL statement
     sql = "SELECT * FROM objects"
@@ -43,8 +76,23 @@ def parse_filters(data):
                     sql_filters.append(" {} is null".format(filter))
                 if isinstance(filters[filter], int):
                     sql_filters.append(" {} = {}".format(filter, filters[filter]))
+                else:
+                    sql_filters.append(" {} = {}".format(filter,  map_classes(filters[filter],"rf_xmatch")))
+
             if filter.startswith("pclass"):
-                sql_filters.append(" {} >= {}".format(filter, filters[filter]))
+                sql_filters.append(" {} >= {}".format(filter,filters[filter]))
+
+            if filter == "stamps":
+                print(filters[filter])
+                if filters[filter] == "classified" :
+                    sql_filters.append( " classearly IS NOT NULL " )
+
+                if filters[filter] == "not classified" :
+                    sql_filters.append( " classearly IS NULL " )
+
+                if filters[filter] != "classified" and filters[filter] != "not classified":
+                    class_selected = map_classes(filters["stamps"],"stamp")
+                    sql_filters.append(" classearly = '{}' ".format(class_selected))
 
     if "coordinates" in data["query_parameters"]:
         filters = data["query_parameters"]
