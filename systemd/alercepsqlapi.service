@@ -6,7 +6,7 @@ After=network.target
 User=ubuntu
 Group=www-data
 WorkingDirectory=/opt/alerce/query-postgres-api/scripts
-ExecStart=/usr/local/bin/gunicorn 'run_server:app' --bind unix:/opt/alerce/query-postgres-api/sock/psqlapi.sock --workers 2 --log-file /home/ubuntu/logs/psqlapi-develop.log
+ExecStart=/usr/local/bin/gunicorn 'deploy:app' --bind unix:/opt/alerce/query-postgres-api/sock/psqlapi.sock --workers 2 --log-file /home/ubuntu/logs/psqlapi-develop.log
 
 [Install]
 WantedBy=multi-user.target
