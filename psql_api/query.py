@@ -6,9 +6,12 @@ from astropy import units as u
 import numpy as np
 import math
 
+import logging
+logger = logging.getLogger(__name__)
+
 query_blueprint = Blueprint('query', __name__, template_folder='templates')
 
-psql_pool = pool.SimpleConnectionPool(1, 20,user = config["DATABASE"]["User"],
+psql_pool = pool.SimpleConnectionPool(0, 20,user = config["DATABASE"]["User"],
                                               password = config["DATABASE"]["Pass"],
                                               host = config["DATABASE"]["Host"],
                                               port = config["DATABASE"]["Port"],
@@ -17,11 +20,11 @@ psql_pool = pool.SimpleConnectionPool(1, 20,user = config["DATABASE"]["User"],
 
 def map_classes(class_id,table):
     stamp = {
-        1: "AGN",
-        2: "SN",
-        3: "VS",
-        4: "asteroid",
-        5: "bogus"
+        1: "'AGN'",
+        2: "'SN'",
+        3: "'VS'",
+        4: "'asteroid'",
+        5: "'bogus'"
     }
     rf = {
         "CEPH": 1,
@@ -32,19 +35,21 @@ def map_classes(class_id,table):
         "SNe":6,
         "Other":0
     }
-
+    logger.debug(class_id)
+    logger.debug(type(class_id))
     if table == "stamp":
-        if type(class_id) is int or class_id.isnumeric():
-            return stamp[class_id]
-        else:
+        try:
+            c = stamp[class_id]
+            return c
+        except:
             return class_id
     if table == "rf_xmatch":
-        if type(class_id) is str or not class_id.isnumeric():
-            return rf[class_id]
-        else:
+        try:
+            c = rf[class_id]
+            return c
+
+        except:
             return class_id
-
-
 
 
 
@@ -72,27 +77,17 @@ def parse_filters(data):
             if filter.startswith("class"):
                 if "classified" == filters[filter]:
                     sql_filters.append(" {} is not null".format(filter))
-                if "not classified" == filters[filter]:
+                elif "not classified" == filters[filter]:
                     sql_filters.append(" {} is null".format(filter))
-                if isinstance(filters[filter], int):
-                    sql_filters.append(" {} = {}".format(filter, filters[filter]))
                 else:
-                    sql_filters.append(" {} = {}".format(filter,  map_classes(filters[filter],"rf_xmatch")))
-
+                    if filter == "classearly":
+                        c = map_classes(filters[filter],"stamp")
+                    else:
+                        c = map_classes(filters[filter],"rf_xmatch")
+                    sql_filters.append(" {} = {}".format(filter, c))
             if filter.startswith("pclass"):
                 sql_filters.append(" {} >= {}".format(filter,filters[filter]))
 
-            if filter == "stamps":
-                print(filters[filter])
-                if filters[filter] == "classified" :
-                    sql_filters.append( " classearly IS NOT NULL " )
-
-                if filters[filter] == "not classified" :
-                    sql_filters.append( " classearly IS NULL " )
-
-                if filters[filter] != "classified" and filters[filter] != "not classified":
-                    class_selected = map_classes(filters["stamps"],"stamp")
-                    sql_filters.append(" classearly = '{}' ".format(class_selected))
 
     if "coordinates" in data["query_parameters"]:
         filters = data["query_parameters"]
