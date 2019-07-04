@@ -13,7 +13,7 @@ def get_detections():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT * FROM detections WHERE oid = '{}' ORDER BY mjd ASC".format(oid)
+    query = "SELECT cast(candid as text), * FROM detections WHERE oid = '{}' ORDER BY mjd ASC".format(oid)
     try:
         cur.execute(query,[oid])
         result = {
