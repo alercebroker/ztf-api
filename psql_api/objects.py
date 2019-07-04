@@ -14,7 +14,7 @@ def get_detections():
 
     oid = data["oid"]
     query = "SELECT cast(candid as text), oid, mjd, fid, diffmaglim, \
-    magpsf, magap, FROM detections WHERE oid = '{}' ORDER BY mjd ASC".format(oid)
+    magpsf, magap FROM detections WHERE oid = '{}' ORDER BY mjd ASC".format(oid)
     try:
         cur.execute(query,[oid])
         result = {
