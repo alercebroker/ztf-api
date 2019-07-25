@@ -217,7 +217,7 @@ def recent_alerts():
         current_app.logger.exception("Error getting recent alerts ")
         return Response("Something went wrong quering the database", 500)
     
-@objects_blueprint.route("/recent_alerts", methods=("POST",))
+@objects_blueprint.route("/recent_objects", methods=("POST",))
 def recent_objects():
     data = request.get_json(force=True)
     if "hours" not in data:
