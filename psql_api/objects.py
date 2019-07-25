@@ -197,7 +197,7 @@ def recent_objects():
         mjd = mjd - int(hours/24)
     query = "SELECT count(oid) from detections where mjd >= {}".format(mjd)
     try:
-        cur.execute(query,[oid])
+        cur.execute(query)
         result = {
             "oid" : oid,
             "result" : {}
