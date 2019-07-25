@@ -200,7 +200,6 @@ def recent_objects():
         current_app.logger.debug("starting query")
         cur.execute(query)
         result = {
-            "oid" : oid,
             "result" : {}
         }
         resp = cur.fetchall()
