@@ -183,8 +183,8 @@ def get_features():
         current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
 
-@objects_blueprint.route("/recent_objects", methods=("POST",))
-def recent_objects():
+@objects_blueprint.route("/recent_alerts", methods=("POST",))
+def recent_alerts():
     data = request.get_json(force=True)
     if "hours" not in data:
         hours = 24
@@ -197,26 +197,56 @@ def recent_objects():
         mjd = mjd - int(hours/24)
     query = "SELECT count(oid) from detections where mjd >= {}".format(mjd)
     try:
-        current_app.logger.debug("starting query")
         cur.execute(query)
         result = {
             "result" : {}
         }
         resp = cur.fetchall()
-        current_app.logger.debug("got result")
         colnames = [desc[0] for desc in cur.description]
         count = 0
         for row in resp:
-            current_app.logger.debug("ROW {}".format(row))
             row = list(row)
             for j in range(len(row)):
                 if type(row[j]) is float and math.isnan(row[j]):
                     row[j] = None
             count = dict(zip(colnames,row)) if row else None
-        result["result"]["count"] = count
+        result["result"] = count
         return jsonify(result)
 
     except:
         current_app.logger.exception("Error getting recent alerts ")
         return Response("Something went wrong quering the database", 500)
     
+@objects_blueprint.route("/recent_alerts", methods=("POST",))
+def recent_objects():
+    data = request.get_json(force=True)
+    if "hours" not in data:
+        hours = 24
+    else:
+        hours = data["hours"]
+    if "mjd" not in data:
+        return Response('{"status": "error", "text": "MJD Needed"}\n', 400)
+    else:
+        mjd = data["mjd"]
+        mjd = mjd - int(hours/24)
+    query = "SELECT count(oid) from objects where lastmjd >= {}".format(mjd)
+    try:
+        cur.execute(query)
+        result = {
+            "result" : {}
+        }
+        resp = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
+        count = 0
+        for row in resp:
+            row = list(row)
+            for j in range(len(row)):
+                if type(row[j]) is float and math.isnan(row[j]):
+                    row[j] = None
+            count = dict(zip(colnames,row)) if row else None
+        result["result"] = count
+        return jsonify(result)
+
+    except:
+        current_app.logger.exception("Error getting recent alerts ")
+        return Response("Something went wrong quering the database", 500)
