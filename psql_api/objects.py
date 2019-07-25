@@ -197,12 +197,14 @@ def recent_objects():
         mjd = mjd - int(hours/24)
     query = "SELECT count(oid) from detections where mjd >= {}".format(mjd)
     try:
+        current_app.logger.debug("starting query")
         cur.execute(query)
         result = {
             "oid" : oid,
             "result" : {}
         }
         resp = cur.fetchall()
+        current_app.logger.debug("got result")
         colnames = [desc[0] for desc in cur.description]
         count = 0
         for row in resp:
