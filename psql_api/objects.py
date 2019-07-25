@@ -206,6 +206,7 @@ def recent_objects():
         colnames = [desc[0] for desc in cur.description]
         count = 0
         for row in resp:
+            current_app.logger.debug("ROW {}".format(row))
             row = list(row)
             for j in range(len(row)):
                 if type(row[j]) is float and math.isnan(row[j]):
