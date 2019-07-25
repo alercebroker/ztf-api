@@ -1,6 +1,7 @@
 from .app import cur
 from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context
 import math
+from datetime import datetime, timedelta
 
 objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
 
@@ -181,3 +182,39 @@ def get_features():
     except:
         current_app.logger.exception("Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
+
+@objects_blueprint.route("/recent_objects", methods=("POST",))
+def recent_objects():
+    data = request.get_json(force=True)
+    if "hours" not in data:
+        hours = 24
+    else:
+        hours = data["hours"]
+    if "mjd" not in data:
+        return Response('{"status": "error", "text": "MJD Needed"}\n', 400)
+    else:
+        mjd = data["mjd"]
+        mjd = mjd - int(hours/24)
+    query = "SELECT count(oid) from detections where mjd >= {}".format(mjd)
+    try:
+        cur.execute(query,[oid])
+        result = {
+            "oid" : oid,
+            "result" : {}
+        }
+        resp = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
+        count = 0
+        for row in resp:
+            row = list(row)
+            for j in range(len(row)):
+                if type(row[j]) is float and math.isnan(row[j]):
+                    row[j] = None
+            count = dict(zip(colnames,row)) if row else None
+        result["result"]["count"] = count
+        return jsonify(result)
+
+    except:
+        current_app.logger.exception("Error getting recent alerts ")
+        return Response("Something went wrong quering the database", 500)
+    
