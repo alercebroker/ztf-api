@@ -1,4 +1,4 @@
-from .app import cur
+from .app import cur, cache
 from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context
 import math
 from datetime import datetime, timedelta
