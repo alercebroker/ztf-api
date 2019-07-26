@@ -3,7 +3,6 @@ import configparser
 from psycopg2 import connect
 from flask_cors import CORS
 from flask import Flask
-from flask_caching import Cache
 import logging
 #Reading Config File
 filePath = os.path.dirname(os.path.abspath(__file__))
@@ -12,7 +11,7 @@ config = configparser.ConfigParser()
 config.read(os.path.join(configPath,"config.ini"))
 
 #Starting Flask API
-cache = Cache(config={'CACHE_TYPE': 'simple'})
+from .objects import cache
 app = Flask(__name__)
 cache.init_app(app)
 CORS(app)
