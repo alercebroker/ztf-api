@@ -2,10 +2,8 @@ from .app import cur, cache
 from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context
 import math
 from datetime import datetime, timedelta
-from flask_caching import Cache
 
 objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
-cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 @objects_blueprint.route("/get_detections", methods=("POST",))
