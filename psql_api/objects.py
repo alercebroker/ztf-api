@@ -16,10 +16,10 @@ def get_detections():
     oid = data["oid"]
     query = "SELECT cast(candid as text) as candid_str, * FROM detections WHERE oid = '{}' ORDER BY mjd ASC".format(oid)
     try:
-        cur.execute(query,[oid])
+        cur.execute(query, [oid])
         result = {
-            "oid" : oid,
-            "result" : {}
+            "oid": oid,
+            "result": {}
         }
         resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
@@ -29,13 +29,14 @@ def get_detections():
             for j in range(len(row)):
                 if type(row[j]) is float and math.isnan(row[j]):
                     row[j] = None
-            alert = dict(zip(colnames,row)) if row else None
+            alert = dict(zip(colnames, row)) if row else None
             alerts.append(alert)
         result["result"]["detections"] = alerts
         return jsonify(result)
 
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(oid))
+        current_app.logger.exception(
+            "Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
 
 
@@ -46,7 +47,8 @@ def get_non_detections():
     if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
     oid = data["oid"]
-    query = "SELECT * FROM non_detections WHERE oid = '{}' ORDER BY mjd ASC".format(oid)
+    query = "SELECT * FROM non_detections WHERE oid = '{}' ORDER BY mjd ASC".format(
+        oid)
     try:
         cur.execute(query, [oid])
         result = {
@@ -63,7 +65,8 @@ def get_non_detections():
         return jsonify(result)
 
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(oid))
+        current_app.logger.exception(
+            "Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
 
 
@@ -77,7 +80,7 @@ def get_stats():
     oid = data["oid"]
     query = "SELECT * FROM objects WHERE oid = '{}'".format(oid)
     try:
-        cur.execute(query,[oid])
+        cur.execute(query, [oid])
         result = {
             "oid": oid,
             "result": {}
@@ -87,11 +90,11 @@ def get_stats():
         colmap = dict(zip(list(range(len(colnames))), colnames))
 
         obj = {}
-        for j,col in enumerate(resp):
+        for j, col in enumerate(resp):
             if col == "id":
                 continue
             if type(col) is float and col == float("inf"):
-                obj[colmap[j]] = None#99.0
+                obj[colmap[j]] = None  # 99.0
             elif type(col) is float and math.isnan(col):
                 obj[colmap[j]] = None
             else:
@@ -99,7 +102,8 @@ def get_stats():
         result["result"]["stats"] = obj
         return jsonify(result)
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(oid))
+        current_app.logger.exception(
+            "Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
 
 
@@ -112,7 +116,8 @@ def get_probabilities():
 
     oid = data["oid"]
     query_prob = "SELECT * FROM probabilities WHERE oid = '{}'".format(oid)
-    query_stamp = "SELECT * FROM stamp_classification WHERE oid = '{}'".format(oid)
+    query_stamp = "SELECT * FROM stamp_classification WHERE oid = '{}'".format(
+        oid)
     result = {
         "oid": oid,
         "result": {
@@ -127,14 +132,16 @@ def get_probabilities():
         resp_prob = cur.fetchone()
         column_prob = [desc[0] for desc in cur.description]
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(oid))
+        current_app.logger.exception(
+            "Error getting detections from ({})".format(oid))
         resp_prob = "fail"
     try:
         cur.execute(query_stamp, [oid])
         resp_stamp = cur.fetchone()
         column_stamp = [desc[0] for desc in cur.description]
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(oid))
+        current_app.logger.exception(
+            "Error getting detections from ({})".format(oid))
         resp_stamp = "fail"
     if resp_prob == "fail" and resp_stamp == "fail":
         return Response("Something went wrong quering the database", 500)
@@ -160,7 +167,8 @@ def get_features():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM features WHERE oid = '{}'".format(oid)
+    query = "SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM features WHERE oid = '{}'".format(
+        oid)
     try:
         cur.execute(query, [oid])
         result = {
@@ -172,7 +180,7 @@ def get_features():
         if resp is None:
             result["result"]["period"] = {}
             return jsonify(result)
-        features = dict(zip(colnames,resp))
+        features = dict(zip(colnames, resp))
         if features["n_samples_1"] > features["n_samples_2"]:
             features["periodls_2"] = features["periodls_1"]
         else:
@@ -180,10 +188,13 @@ def get_features():
         result["result"]["period"] = features
         return jsonify(result)
     except:
-        current_app.logger.exception("Error getting detections from ({})".format(oid))
+        current_app.logger.exception(
+            "Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
 
+
 @objects_blueprint.route("/recent_alerts", methods=("POST",))
+@cache.memoize(3600)
 def recent_alerts():
     data = request.get_json(force=True)
     if "hours" not in data:
@@ -199,7 +210,7 @@ def recent_alerts():
     try:
         cur.execute(query)
         result = {
-            "result" : {}
+            "result": {}
         }
         resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
@@ -209,15 +220,17 @@ def recent_alerts():
             for j in range(len(row)):
                 if type(row[j]) is float and math.isnan(row[j]):
                     row[j] = None
-            count = dict(zip(colnames,row)) if row else None
+            count = dict(zip(colnames, row)) if row else None
         result["result"] = count
         return jsonify(result)
 
     except:
         current_app.logger.exception("Error getting recent alerts ")
         return Response("Something went wrong quering the database", 500)
-    
+
+
 @objects_blueprint.route("/recent_objects", methods=("POST",))
+@cache.memoize(3600)
 def recent_objects():
     data = request.get_json(force=True)
     if "hours" not in data:
@@ -233,7 +246,7 @@ def recent_objects():
     try:
         cur.execute(query)
         result = {
-            "result" : {}
+            "result": {}
         }
         resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
@@ -243,10 +256,70 @@ def recent_objects():
             for j in range(len(row)):
                 if type(row[j]) is float and math.isnan(row[j]):
                     row[j] = None
-            count = dict(zip(colnames,row)) if row else None
+            count = dict(zip(colnames, row)) if row else None
         result["result"] = count
         return jsonify(result)
 
     except:
         current_app.logger.exception("Error getting recent alerts ")
         return Response("Something went wrong quering the database", 500)
+
+
+@objects_blueprint.route("/classified_objects", methods=("POST",))
+@cache.memoize(3600)
+def classified_objects():
+    result = {
+        "result": {}
+    }
+    query = "SELECT count(oid) from objects where classxmatch is not null"
+    try:
+        cur.execute(query)
+        resp = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
+        count = 0
+        for row in resp:
+            row = list(row)
+            for j in range(len(row)):
+                if type(row[j]) is float and math.isnan(row[j]):
+                    row[j] = None
+            count = dict(zip(colnames, row)) if row else None
+        result["result"]["xmatch"] = count
+    except:
+        current_app.logger.exception("Error getting classified xmatch objects")
+        return Response("Something went wrong quering the database", 500)
+
+    query = "SELECT count(oid) from objects where classrf is not null"
+    try:
+        cur.execute(query)
+        resp = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
+        count = 0
+        for row in resp:
+            row = list(row)
+            for j in range(len(row)):
+                if type(row[j]) is float and math.isnan(row[j]):
+                    row[j] = None
+            count = dict(zip(colnames, row)) if row else None
+        result["result"]["rf"] = count
+    except:
+        current_app.logger.exception("Error getting classified random forest objects")
+        return Response("Something went wrong quering the database", 500)
+    
+    query = "SELECT count(oid) from objects where classearly is not null"
+    try:
+        cur.execute(query)
+        resp = cur.fetchall()
+        colnames = [desc[0] for desc in cur.description]
+        count = 0
+        for row in resp:
+            row = list(row)
+            for j in range(len(row)):
+                if type(row[j]) is float and math.isnan(row[j]):
+                    row[j] = None
+            count = dict(zip(colnames, row)) if row else None
+        result["result"]["early"] = count
+    except:
+        current_app.logger.exception("Error getting classified random forest objects")
+        return Response("Something went wrong quering the database", 500)
+
+    return jsonify(result)
