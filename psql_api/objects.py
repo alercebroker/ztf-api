@@ -283,7 +283,7 @@ def classified_objects():
                 if type(row[j]) is float and math.isnan(row[j]):
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
-        result["result"]["xmatch"] = count
+        result["result"]["xmatch"] = count["count"]
     except:
         current_app.logger.exception("Error getting classified xmatch objects")
         return Response("Something went wrong quering the database", 500)
@@ -300,7 +300,7 @@ def classified_objects():
                 if type(row[j]) is float and math.isnan(row[j]):
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
-        result["result"]["rf"] = count
+        result["result"]["rf"] = count["count"]
     except:
         current_app.logger.exception("Error getting classified random forest objects")
         return Response("Something went wrong quering the database", 500)
@@ -317,7 +317,7 @@ def classified_objects():
                 if type(row[j]) is float and math.isnan(row[j]):
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
-        result["result"]["early"] = count
+        result["result"]["early"] = count["count"]
     except:
         current_app.logger.exception("Error getting classified random forest objects")
         return Response("Something went wrong quering the database", 500)
