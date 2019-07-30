@@ -1,0 +1,6 @@
+Flask-Caching
+Flask
+psycopg2-binary
+flask_cors
+pandas
+P4J
