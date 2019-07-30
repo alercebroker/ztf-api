@@ -5,6 +5,7 @@ from flask_cors import CORS
 from flask import Flask
 from flask_caching import Cache
 import logging
+
 #Reading Config File
 filePath = os.path.dirname(os.path.abspath(__file__))
 configPath = os.path.join(filePath,"..","config")
@@ -40,3 +41,6 @@ app.register_blueprint(query_blueprint)
 #Loading Objects Blueprint
 from .objects import objects_blueprint
 app.register_blueprint(objects_blueprint)
+
+from .variable import variable_blueprint
+app.register_blueprint(variable_blueprint)
