@@ -40,3 +40,7 @@ app.register_blueprint(query_blueprint)
 #Loading Objects Blueprint
 from .objects import objects_blueprint
 app.register_blueprint(objects_blueprint)
+
+#Loading Download Blueprint
+from .download import download_blueprint
+app.register_blueprint(download_blueprint)
