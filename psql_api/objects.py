@@ -14,7 +14,7 @@ def get_detections():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT cast(candid as text) as candid_str, * FROM detections WHERE oid = '{}' ORDER BY mjd ASC".format(oid)
+    query = "SELECT cast(candid as text) as candid_str, * FROM detections WHERE oid = %s ORDER BY mjd ASC"
     try:
         cur.execute(query, [oid])
         result = {
@@ -47,8 +47,7 @@ def get_non_detections():
     if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
     oid = data["oid"]
-    query = "SELECT * FROM non_detections WHERE oid = '{}' ORDER BY mjd ASC".format(
-        oid)
+    query = "SELECT * FROM non_detections WHERE oid = %s ORDER BY mjd ASC"
     try:
         cur.execute(query, [oid])
         result = {
@@ -78,7 +77,7 @@ def get_stats():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT * FROM objects WHERE oid = '{}'".format(oid)
+    query = "SELECT * FROM objects WHERE oid = %s"
     try:
         cur.execute(query, [oid])
         result = {
@@ -115,9 +114,8 @@ def get_probabilities():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query_prob = "SELECT * FROM probabilities WHERE oid = '{}'".format(oid)
-    query_stamp = "SELECT * FROM stamp_classification WHERE oid = '{}'".format(
-        oid)
+    query_prob = "SELECT * FROM probabilities WHERE oid = %s"
+    query_stamp = "SELECT * FROM stamp_classification WHERE oid = %s"
     result = {
         "oid": oid,
         "result": {
@@ -167,8 +165,7 @@ def get_features():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM features WHERE oid = '{}'".format(
-        oid)
+    query = "SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM features WHERE oid = %s"
     try:
         cur.execute(query, [oid])
         result = {
@@ -206,9 +203,9 @@ def recent_alerts():
     else:
         mjd = data["mjd"]
         mjd = mjd - int(hours/24)
-    query = "SELECT count(oid) from detections where mjd >= {}".format(mjd)
+    query = "SELECT count(oid) from detections where mjd >= %s"
     try:
-        cur.execute(query)
+        cur.execute(query, [mjd])
         result = {
             "result": {}
         }
@@ -242,9 +239,9 @@ def recent_objects():
     else:
         mjd = data["mjd"]
         mjd = mjd - int(hours/24)
-    query = "SELECT count(oid) from objects where lastmjd >= {}".format(mjd)
+    query = "SELECT count(oid) from objects where lastmjd >= %s"
     try:
-        cur.execute(query)
+        cur.execute(query, [mjd])
         result = {
             "result": {}
         }
