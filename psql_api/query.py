@@ -1,4 +1,5 @@
 from psycopg2 import pool
+from psycopg2 import sql
 from .app import config
 from flask import Response,stream_with_context,request,Blueprint,current_app,g,jsonify
 
@@ -20,11 +21,11 @@ psql_pool = pool.SimpleConnectionPool(0, 20,user = config["DATABASE"]["User"],
 
 def map_classes(class_id,table):
     stamp = {
-        1: "'AGN'",
-        2: "'SN'",
-        3: "'VS'",
-        4: "'asteroid'",
-        5: "'bogus'"
+        1: "AGN",
+        2: "SN",
+        3: "VS",
+        4: "asteroid",
+        5: "bogus"
     }
     rf = {
         "CEPH": 1,
@@ -35,8 +36,8 @@ def map_classes(class_id,table):
         "SNe":6,
         "Other":0
     }
-    logger.debug(class_id)
-    logger.debug(type(class_id))
+    current_app.logger.debug(class_id)
+    current_app.logger.debug(type(class_id))
     if table == "stamp":
         try:
             c = stamp[class_id]
@@ -54,39 +55,52 @@ def map_classes(class_id,table):
 
 
 def parse_filters(data):
+
     #Base SQL statement
-    sql = "SELECT * FROM objects"
+    sql_str = "SELECT * FROM objects"
+    count_sql_str = sql.SQL(sql_str.replace("*","COUNT(*)"))
+    sql_str = sql.SQL(sql_str)
+
+
     #Array of filters
     sql_filters = []
-
+    sql_params = []
     if "filters" in data["query_parameters"]:
         filters = data["query_parameters"]["filters"]
 
         for i,filter in enumerate(filters):
             #OID Filter
             if "oid" == filter:
-                sql_filters.append(" oid='{}'".format(filters["oid"] ))
+                sql_filters.append(sql.SQL(" oid=%s"))
+                sql_params.append(filters["oid"])
 
             #NOBS Filter
             if "nobs" == filter:
                 if "min" in filters["nobs"]:
-                    sql_filters.append(" nobs >= {}".format(filters["nobs"]["min"]))
+                    sql_filters.append(sql.SQL(" nobs >= %s"))
+                    sql_params.append(filters["nobs"]["min"])
                 if "max" in filters["nobs"]:
-                    sql_filters.append(" nobs <= {}".format(filters["nobs"]["max"]))
+                    sql_filters.append(sql.SQL(" nobs <= %s"))
+                    sql_params.append(filters["nobs"]["min"])
+
             # CLASS FILTER
             if filter.startswith("class"):
                 if "classified" == filters[filter]:
-                    sql_filters.append(" {} is not null".format(filter))
+                    sql_filters.append(sql.SQL("{} is not null").format(sql.Identifier(filter)))
+                    # sql_params.append(filter)
                 elif "not classified" == filters[filter]:
-                    sql_filters.append(" {} is null".format(filter))
+                    sql_filters.append(sql.SQL("{} is null").format(sql.Identifier(filter)))
+                    sql_params.append(filter)
                 else:
                     if filter == "classearly":
                         c = map_classes(filters[filter],"stamp")
                     else:
                         c = map_classes(filters[filter],"rf_xmatch")
-                    sql_filters.append(" {} = {}".format(filter, c))
+                    sql_filters.append(sql.SQL("{}=%s").format(sql.Identifier(filter)))
+                    sql_params.append(c)
             if filter.startswith("pclass"):
-                sql_filters.append(" {} >= {}".format(filter,filters[filter]))
+                sql_filters.append(sql.SQL("{}>= %s").format(sql.Identifier(filter)))
+                sql_params.append(filters[filter])
 
 
     if "coordinates" in data["query_parameters"]:
@@ -104,8 +118,8 @@ def parse_filters(data):
         dec = float(filters["coordinates"]["dec"])
 
         #Adding "Square" coordinates filter
-        sql_filters.append(" meanra BETWEEN {} AND {} AND meandec BETWEEN {} AND {}".format(ra-deg,ra+deg,dec-deg,dec+deg))
-
+        sql_filters.append(sql.SQL(" meanra BETWEEN %s AND %s AND meandec BETWEEN %s AND %s "))
+        sql_params.extend((ra-deg,ra+deg,dec-deg,dec+deg))
 
     if "dates" in data["query_parameters"]:
         filters = {"dates": {}}
@@ -113,16 +127,23 @@ def parse_filters(data):
             firstmjd = data["query_parameters"]["dates"]["firstmjd"]
 
             if "min" in firstmjd:
-                sql_filters.append( " firstmjd >= {} ".format(firstmjd["min"]) )
+                sql_filters.append( sql.SQL(" firstmjd >= %s " ))
+                sql_params.append(firstmjd["min"])
             if "max" in firstmjd:
-                sql_filters.append( " firstmjd <= {} ".format(firstmjd["max"]) )
+                sql_filters.append(sql.SQL( " firstmjd <= %s "))
+                sql_params.append(firstmjd["min"])
 
     #If there are filters add to sql
     if len(sql_filters) > 0:
-        sql_filters_str = " AND ".join(sql_filters)
-        sql += " WHERE {}".format(sql_filters_str)
+        fields = sql_filters[0]
 
-    return sql
+        for field in sql_filters[1:]:
+            fields += sql.SQL(' AND ')
+            fields += field
+
+        sql_str = sql_str + sql.SQL(" WHERE ") + fields
+        count_sql_str = count_sql_str + sql.SQL(" WHERE ") + fields
+    return count_sql_str,sql_str, sql_params
 
 @query_blueprint.route("/query",methods=("POST",))
 def query():
@@ -137,24 +158,33 @@ def query():
     row_number = int(data["total"]) if "total" in data else None
     num_pages = int(np.ceil(row_number/records_per_pages)) if "total" in data else None
     sort_by = data["sortBy"] if "sortBy" in data else "nobs"
+    sort_by = sort_by if sort_by is not None else "nobs"
     if "sortDesc" in data:
         sort_desc = "DESC" if data["sortDesc"] else "ASC"
     else:
         sort_desc = "DESC"
-    sql = parse_filters(data)
+    count_query,sql_query,sql_params = parse_filters(data)
 
     connection  = psql_pool.getconn()
+    count_query = count_query.as_string(connection)
+
+
     if row_number is None:
         cur = connection.cursor(name="ALERCE Big Query Counter Cursor")
-        current_app.logger.debug(sql.replace("*","COUNT(*)"))
-        cur.execute(sql.replace("*","COUNT(*)"))
+        current_app.logger.debug(count_query)
+        cur.execute(count_query, sql_params)
         row_number = cur.fetchone()[0]
         num_pages = int(np.ceil(row_number/records_per_pages))
         cur.close()
-    sql += " ORDER BY {} {} OFFSET {} LIMIT {} ".format(sort_by,sort_desc,(page-1)*records_per_pages, records_per_pages)
+    order_query = sql.SQL("ORDER BY {} ").format(sql.Identifier(sort_by)) + \
+                  sql.SQL("{} ".format(sort_desc)) + sql.SQL("OFFSET %s LIMIT %s")
+    sql_params.extend([(page-1)*records_per_pages,records_per_pages])
+    sql_query = sql_query + order_query
+    sql_query = sql_query.as_string(connection) 
+    current_app.logger.debug(sql_query)
     cur = connection.cursor(name="ALERCE Big Query Cursor")
-    current_app.logger.debug(sql)
-    cur.execute(sql)
+    cur.execute(sql_query,sql_params)
+
     current_app.logger.debug("Rows Returned:{}".format(row_number))
     #Generating json response
     def generateResp():
@@ -197,4 +227,8 @@ def get_sql():
     data = request.get_json(force=True)
     if "query_parameters" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
-    return parse_filters(data)
+
+    sql, params = parse_filters(data)
+    sql = sql.replace('oid=%s',"oid='%s'")
+    sql = sql.replace('%s','{}')
+    return sql.format(*params)
