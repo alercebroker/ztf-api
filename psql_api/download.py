@@ -24,4 +24,4 @@ def download():
         for c in 'Hello world!':
             yield c
             time.sleep(0.5)
-    return Response(gen())
+    return Response(gen(),mimetype='text/csv')
