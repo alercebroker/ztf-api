@@ -3,6 +3,7 @@ from .app import config
 from .query import parse_filters
 from flask import Response, request, Blueprint, current_app, g, jsonify
 from io import StringIO
+import time
 
 import logging
 logger = logging.getLogger(__name__)
@@ -19,8 +20,8 @@ psql_pool = pool.SimpleConnectionPool(0, 20, user=config["DATABASE"]["User"],
 
 @download_blueprint.route("/download", methods=("POST",))
 def download():
-    data = [[i for i in range(10)] for j in range(1000000)]
-    generator = (cell for row in data
-                 for cell in row)
-    return Response(generator, mimetype='text/plain', headers={"Content-Disposition":
-                                                             "attachment;filename=test.txt"})
+    def gen():
+        for c in 'Hello world!':
+            yield c
+            time.sleep(0.5)
+    return Response(gen())
