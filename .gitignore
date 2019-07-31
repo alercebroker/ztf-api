@@ -1,4 +1,5 @@
 .idea/
 psql_api/__pycache__/
 tests/tests.out
+.vscode
 
