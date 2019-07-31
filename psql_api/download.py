@@ -19,7 +19,7 @@ psql_pool = pool.SimpleConnectionPool(0, 20, user=config["DATABASE"]["User"],
 
 @download_blueprint.route("/download", methods=("POST",))
 def download():
-    data = [1,2,3,4,5,6,7,8,9,10]
+    data = ['1','2','3','4','5','6','7','8','9','10']
     def generate():
         for row in data:
             yield ','.join(row) + '\n'
