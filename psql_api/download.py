@@ -31,7 +31,7 @@ def download():
     cur = connection.cursor(name="ALERCE Big Query Cursor")
     _, sql_query,sql_params = parse_filters(data)
     sql_query = sql_query.as_string(connection)
-    cur.execute(sql_query + " limit 1000")
+    cur.execute(sql_query + " limit 1000", sql_params)
     first_row = cur.fetchone()
     colnames = [desc[0] for desc in cur.description]
     def generateResp():
