@@ -51,7 +51,7 @@ def parse_filters(data):
                     sql_filters.append(sql.SQL("{} is null").format(sql.Identifier(filter)))
                     sql_params.append(filter)
                 else:
-                    c = classes[filters[filter]]
+                    c = filters[filter]
                     sql_filters.append(sql.SQL("{}=%s").format(sql.Identifier(filter)))
                     sql_params.append(c)
             if filter.startswith("pclass"):
