@@ -185,6 +185,9 @@ def get_sql():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     _, sql, params = parse_filters(data)
+    connection  = psql_pool.getconn()
+    sql = sql.as_string(connection)
     sql = sql.replace('oid=%s',"oid='%s'")
     sql = sql.replace('%s','{}')
+    psql_pool.putconn(connection)
     return sql.format(*params)
