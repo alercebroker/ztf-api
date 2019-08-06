@@ -1,6 +1,6 @@
 from psycopg2 import pool
 from psycopg2 import sql
-from .app import config
+from .app import config, classes
 from flask import Response,stream_with_context,request,Blueprint,current_app,g,jsonify
 
 from astropy import units as u
@@ -16,43 +16,7 @@ psql_pool = pool.SimpleConnectionPool(0, 20,user = config["DATABASE"]["User"],
                                               password = config["DATABASE"]["Pass"],
                                               host = config["DATABASE"]["Host"],
                                               port = config["DATABASE"]["Port"],
-                                              database = config["DATABASE"]["Database"])
-
-
-def map_classes(class_id,table):
-    stamp = {
-        1: "AGN",
-        2: "SN",
-        3: "VS",
-        4: "asteroid",
-        5: "bogus"
-    }
-    rf = {
-        "CEPH": 1,
-        "DSCT": 2,
-        "EB": 3,
-        "LPV":4,
-        "RRL":5,
-        "SNe":6,
-        "Other":0
-    }
-    current_app.logger.debug(class_id)
-    current_app.logger.debug(type(class_id))
-    if table == "stamp":
-        try:
-            c = stamp[class_id]
-            return c
-        except:
-            return class_id
-    if table == "rf_xmatch":
-        try:
-            c = rf[class_id]
-            return c
-
-        except:
-            return class_id
-
-
+                                              database = config["DATABASE"]["Database"])    
 
 def parse_filters(data):
 
@@ -92,10 +56,7 @@ def parse_filters(data):
                     sql_filters.append(sql.SQL("{} is null").format(sql.Identifier(filter)))
                     sql_params.append(filter)
                 else:
-                    if filter == "classearly":
-                        c = map_classes(filters[filter],"stamp")
-                    else:
-                        c = map_classes(filters[filter],"rf_xmatch")
+                    c = classes[filters[filter]]
                     sql_filters.append(sql.SQL("{}=%s").format(sql.Identifier(filter)))
                     sql_params.append(c)
             if filter.startswith("pclass"):
