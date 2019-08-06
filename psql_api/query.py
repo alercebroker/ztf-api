@@ -40,7 +40,7 @@ def parse_filters(data):
                     sql_params.append(filters["nobs"]["min"])
                 if "max" in filters["nobs"]:
                     sql_filters.append(sql.SQL(" nobs <= %s"))
-                    sql_params.append(filters["nobs"]["min"])
+                    sql_params.append(filters["nobs"]["max"])
 
             # CLASS FILTER
             if filter.startswith("class"):
