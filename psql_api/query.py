@@ -189,7 +189,7 @@ def get_sql():
     if "query_parameters" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
-    sql, params = parse_filters(data)
+    _, sql, params = parse_filters(data)
     sql = sql.replace('oid=%s',"oid='%s'")
     sql = sql.replace('%s','{}')
     return sql.format(*params)
