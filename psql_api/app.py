@@ -1,10 +1,11 @@
 import os
 import configparser
-from psycopg2 import connect, sql
+from psycopg2 import connect, sql, pool
 from flask_cors import CORS
 from flask import Flask
 from flask_caching import Cache
 import logging
+
 # Reading Config File
 filePath = os.path.dirname(os.path.abspath(__file__))
 configPath = os.path.join(filePath, "..", "config")
@@ -22,11 +23,12 @@ if is_gunicorn:
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
 
-conn = connect(host=config["DATABASE"]["host"],
-               port=config["DATABASE"]["port"],
-               user=config["DATABASE"]["User"],
-               password=config["DATABASE"]["Pass"],
-               database=config["DATABASE"]["Database"])
+psql_pool = pool.SimpleConnectionPool(0, 20,user = config["DATABASE"]["User"],
+                                              password = config["DATABASE"]["Pass"],
+                                              host = config["DATABASE"]["Host"],
+                                              port = config["DATABASE"]["Port"],
+                                              database = config["DATABASE"]["Database"])
+conn = psql_pool.getconn()
 cur = conn.cursor()
 
 class_query = sql.SQL("SELECT * FROM class")

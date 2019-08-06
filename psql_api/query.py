@@ -1,6 +1,5 @@
-from psycopg2 import pool
 from psycopg2 import sql
-from .app import config, classes
+from .app import config, classes, psql_pool
 from flask import Response,stream_with_context,request,Blueprint,current_app,g,jsonify
 
 from astropy import units as u
@@ -12,11 +11,7 @@ logger = logging.getLogger(__name__)
 
 query_blueprint = Blueprint('query', __name__, template_folder='templates')
 
-psql_pool = pool.SimpleConnectionPool(0, 20,user = config["DATABASE"]["User"],
-                                              password = config["DATABASE"]["Pass"],
-                                              host = config["DATABASE"]["Host"],
-                                              port = config["DATABASE"]["Port"],
-                                              database = config["DATABASE"]["Database"])    
+    
 
 def parse_filters(data):
 
