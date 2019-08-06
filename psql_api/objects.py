@@ -1,7 +1,8 @@
-from .app import cur, cache
+from .app import cur, cache, config
 from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context
 import math
 from datetime import datetime, timedelta
+from psycopg2 import sql
 
 objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
 
@@ -14,7 +15,7 @@ def get_detections():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT cast(candid as text) as candid_str, * FROM detections WHERE oid = %s ORDER BY mjd ASC"
+    query = sql.SQL("SELECT cast(candid as text) as candid_str, * FROM detections WHERE oid = %s ORDER BY mjd ASC")
     try:
         cur.execute(query, [oid])
         result = {
@@ -47,7 +48,7 @@ def get_non_detections():
     if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
     oid = data["oid"]
-    query = "SELECT * FROM non_detections WHERE oid = %s ORDER BY mjd ASC"
+    query = sql.SQL("SELECT * FROM non_detections WHERE oid = %s ORDER BY mjd ASC")
     try:
         cur.execute(query, [oid])
         result = {
@@ -77,7 +78,7 @@ def get_stats():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT * FROM objects WHERE oid = %s"
+    query = sql.SQL("SELECT * FROM objects WHERE oid = %s")
     try:
         cur.execute(query, [oid])
         result = {
@@ -114,8 +115,8 @@ def get_probabilities():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query_prob = "SELECT * FROM probabilities WHERE oid = %s"
-    query_stamp = "SELECT * FROM stamp_classification WHERE oid = %s"
+    query_prob = sql.SQL("SELECT * FROM probabilities WHERE oid = %s")
+    query_stamp = sql.SQL("SELECT * FROM stamp_classification WHERE oid = %s")
     result = {
         "oid": oid,
         "result": {
@@ -165,7 +166,8 @@ def get_features():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM features WHERE oid = %s"
+    query = sql.SQL("SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM {} WHERE oid = %s".format(
+        config["TABLES"]["Features"]))
     try:
         cur.execute(query, [oid])
         result = {
@@ -203,7 +205,7 @@ def recent_alerts():
     else:
         mjd = data["mjd"]
         mjd = mjd - int(hours/24)
-    query = "SELECT count(oid) from detections where mjd >= %s"
+    query = sql.SQL("SELECT count(oid) from detections where mjd >= %s")
     try:
         cur.execute(query, [mjd])
         result = {
@@ -239,7 +241,7 @@ def recent_objects():
     else:
         mjd = data["mjd"]
         mjd = mjd - int(hours/24)
-    query = "SELECT count(oid) from objects where lastmjd >= %s"
+    query = sql.SQL("SELECT count(oid) from objects where lastmjd >= %s")
     try:
         cur.execute(query, [mjd])
         result = {
@@ -268,7 +270,8 @@ def classified_objects():
     result = {
         "result": {}
     }
-    query = "SELECT count(oid) from objects where classxmatch is not null"
+    query = sql.SQL(
+        "SELECT count(oid) from objects where classxmatch is not null")
     try:
         cur.execute(query)
         resp = cur.fetchall()
@@ -285,7 +288,7 @@ def classified_objects():
         current_app.logger.exception("Error getting classified xmatch objects")
         return Response("Something went wrong quering the database", 500)
 
-    query = "SELECT count(oid) from objects where classrf is not null"
+    query = sql.SQL("SELECT count(oid) from objects where classrf is not null")
     try:
         cur.execute(query)
         resp = cur.fetchall()
@@ -299,10 +302,12 @@ def classified_objects():
             count = dict(zip(colnames, row)) if row else None
         result["result"]["rf"] = count["count"]
     except:
-        current_app.logger.exception("Error getting classified random forest objects")
+        current_app.logger.exception(
+            "Error getting classified random forest objects")
         return Response("Something went wrong quering the database", 500)
-    
-    query = "SELECT count(oid) from objects where classearly is not null"
+
+    query = sql.SQL(
+        "SELECT count(oid) from objects where classearly is not null")
     try:
         cur.execute(query)
         resp = cur.fetchall()
@@ -316,7 +321,8 @@ def classified_objects():
             count = dict(zip(colnames, row)) if row else None
         result["result"]["early"] = count["count"]
     except:
-        current_app.logger.exception("Error getting classified random forest objects")
+        current_app.logger.exception(
+            "Error getting classified random forest objects")
         return Response("Something went wrong quering the database", 500)
 
     return jsonify(result)
