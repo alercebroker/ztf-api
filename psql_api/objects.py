@@ -1,4 +1,4 @@
-from .app import cur, cache, config
+from .app import cache, config, psql_pool
 from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context
 import math
 from datetime import datetime, timedelta
@@ -17,6 +17,8 @@ def get_detections():
     oid = data["oid"]
     query = sql.SQL("SELECT cast(candid as text) as candid_str, * FROM detections WHERE oid = %s ORDER BY mjd ASC")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [oid])
         result = {
             "oid": oid,
@@ -33,6 +35,7 @@ def get_detections():
             alert = dict(zip(colnames, row)) if row else None
             alerts.append(alert)
         result["result"]["detections"] = alerts
+        cur.close()
         return jsonify(result)
 
     except:
@@ -50,6 +53,8 @@ def get_non_detections():
     oid = data["oid"]
     query = sql.SQL("SELECT * FROM non_detections WHERE oid = %s ORDER BY mjd ASC")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [oid])
         result = {
             "oid": oid,
@@ -62,6 +67,7 @@ def get_non_detections():
             alert = dict(zip(colnames, row)) if row else None
             alerts.append(alert)
         result["result"]["non_detections"] = alerts
+        cur.close()
         return jsonify(result)
 
     except:
@@ -80,6 +86,8 @@ def get_stats():
     oid = data["oid"]
     query = sql.SQL("SELECT * FROM objects WHERE oid = %s")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [oid])
         result = {
             "oid": oid,
@@ -100,6 +108,7 @@ def get_stats():
             else:
                 obj[colmap[j]] = col
         result["result"]["stats"] = obj
+        cur.close()
         return jsonify(result)
     except:
         current_app.logger.exception(
@@ -127,17 +136,23 @@ def get_probabilities():
         }
     }
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query_prob, [oid])
         resp_prob = cur.fetchone()
         column_prob = [desc[0] for desc in cur.description]
+        cur.close()
     except:
         current_app.logger.exception(
             "Error getting detections from ({})".format(oid))
         resp_prob = "fail"
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query_stamp, [oid])
         resp_stamp = cur.fetchone()
         column_stamp = [desc[0] for desc in cur.description]
+        cur.close()
     except:
         current_app.logger.exception(
             "Error getting detections from ({})".format(oid))
@@ -169,6 +184,8 @@ def get_features():
     query = sql.SQL("SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM {} WHERE oid = %s".format(
         config["TABLES"]["Features"]))
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [oid])
         result = {
             "oid": oid,
@@ -185,6 +202,7 @@ def get_features():
         else:
             features["periodls_1"] = features["periodls_2"]
         result["result"]["period"] = features
+        cur.close()
         return jsonify(result)
     except:
         current_app.logger.exception(
@@ -207,6 +225,8 @@ def recent_alerts():
         mjd = mjd - int(hours/24)
     query = sql.SQL("SELECT count(oid) from detections where mjd >= %s")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [mjd])
         result = {
             "result": {}
@@ -221,6 +241,7 @@ def recent_alerts():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"] = count
+        cur.close()
         return jsonify(result)
 
     except:
@@ -243,6 +264,8 @@ def recent_objects():
         mjd = mjd - int(hours/24)
     query = sql.SQL("SELECT count(oid) from objects where lastmjd >= %s")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [mjd])
         result = {
             "result": {}
@@ -257,6 +280,7 @@ def recent_objects():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"] = count
+        cur.close()
         return jsonify(result)
 
     except:
@@ -273,6 +297,8 @@ def classified_objects():
     query = sql.SQL(
         "SELECT count(oid) from objects where classxmatch is not null")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query)
         resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
@@ -284,12 +310,15 @@ def classified_objects():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"]["xmatch"] = count["count"]
+        cur.close()
     except:
         current_app.logger.exception("Error getting classified xmatch objects")
         return Response("Something went wrong quering the database", 500)
 
     query = sql.SQL("SELECT count(oid) from objects where classrf is not null")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query)
         resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
@@ -301,6 +330,7 @@ def classified_objects():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"]["rf"] = count["count"]
+        cur.close()
     except:
         current_app.logger.exception(
             "Error getting classified random forest objects")
@@ -309,6 +339,8 @@ def classified_objects():
     query = sql.SQL(
         "SELECT count(oid) from objects where classearly is not null")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query)
         resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
@@ -320,6 +352,7 @@ def classified_objects():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"]["early"] = count["count"]
+        cur.close()
     except:
         current_app.logger.exception(
             "Error getting classified random forest objects")
