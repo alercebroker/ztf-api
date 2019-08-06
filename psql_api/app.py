@@ -56,3 +56,6 @@ app.register_blueprint(query_blueprint)
 # Loading Objects Blueprint
 from .objects import objects_blueprint
 app.register_blueprint(objects_blueprint)
+
+from .variable import variable_blueprint
+app.register_blueprint(variable_blueprint)
