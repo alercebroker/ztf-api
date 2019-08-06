@@ -36,6 +36,7 @@ def get_detections():
             alerts.append(alert)
         result["result"]["detections"] = alerts
         cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
 
     except:
@@ -68,6 +69,7 @@ def get_non_detections():
             alerts.append(alert)
         result["result"]["non_detections"] = alerts
         cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
 
     except:
@@ -109,6 +111,7 @@ def get_stats():
                 obj[colmap[j]] = col
         result["result"]["stats"] = obj
         cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
     except:
         current_app.logger.exception(
@@ -142,6 +145,7 @@ def get_probabilities():
         resp_prob = cur.fetchone()
         column_prob = [desc[0] for desc in cur.description]
         cur.close()
+        psql_pool.putconn(conn)
     except:
         current_app.logger.exception(
             "Error getting detections from ({})".format(oid))
@@ -153,6 +157,7 @@ def get_probabilities():
         resp_stamp = cur.fetchone()
         column_stamp = [desc[0] for desc in cur.description]
         cur.close()
+        psql_pool.putconn(conn)
     except:
         current_app.logger.exception(
             "Error getting detections from ({})".format(oid))
@@ -203,6 +208,7 @@ def get_features():
             features["periodls_1"] = features["periodls_2"]
         result["result"]["period"] = features
         cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
     except:
         current_app.logger.exception(
@@ -242,6 +248,7 @@ def recent_alerts():
             count = dict(zip(colnames, row)) if row else None
         result["result"] = count
         cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
 
     except:
@@ -281,6 +288,7 @@ def recent_objects():
             count = dict(zip(colnames, row)) if row else None
         result["result"] = count
         cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
 
     except:
@@ -311,6 +319,7 @@ def classified_objects():
             count = dict(zip(colnames, row)) if row else None
         result["result"]["xmatch"] = count["count"]
         cur.close()
+        psql_pool.putconn(conn)
     except:
         current_app.logger.exception("Error getting classified xmatch objects")
         return Response("Something went wrong quering the database", 500)
@@ -331,6 +340,7 @@ def classified_objects():
             count = dict(zip(colnames, row)) if row else None
         result["result"]["rf"] = count["count"]
         cur.close()
+        psql_pool.putconn(conn)
     except:
         current_app.logger.exception(
             "Error getting classified random forest objects")
@@ -353,6 +363,7 @@ def classified_objects():
             count = dict(zip(colnames, row)) if row else None
         result["result"]["early"] = count["count"]
         cur.close()
+        psql_pool.putconn(conn)
     except:
         current_app.logger.exception(
             "Error getting classified random forest objects")
