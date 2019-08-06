@@ -186,7 +186,8 @@ def get_features():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = sql.SQL("SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM {} WHERE oid = %s".format(
+    query = sql.SQL(
+        "SELECT periodls_v2_1 as periodls_1, periodls_v2_2 as periodls_2 ,n_samples_1,n_samples_2 FROM {} WHERE oid = %s".format(
         config["TABLES"]["Features"]))
     try:
         conn = psql_pool.getconn()
