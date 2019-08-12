@@ -132,7 +132,7 @@ def query():
         row_number = cur.fetchone()[0]
         num_pages = int(np.ceil(row_number/records_per_pages))
         cur.close()
-    order_query = sql.SQL("ORDER BY {} ").format(sql.Identifier(sort_by)) + \
+    order_query = sql.SQL(" ORDER BY {} ").format(sql.Identifier(sort_by)) + \
                   sql.SQL("{} ".format(sort_desc)) + sql.SQL("OFFSET %s LIMIT %s")
     sql_params.extend([(page-1)*records_per_pages,records_per_pages])
     sql_query = sql_query + order_query
