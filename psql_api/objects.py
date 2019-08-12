@@ -127,8 +127,8 @@ def get_probabilities():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query_prob = sql.SQL("SELECT * FROM probabilities WHERE oid = %s")
-    query_stamp = sql.SQL("SELECT * FROM stamp_classification WHERE oid = %s")
+    query_prob = sql.SQL("SELECT * FROM {} WHERE oid = %s".format(config["TABLES"]["LateProbabilities"]))
+    query_stamp = sql.SQL("SELECT * FROM {} WHERE oid = %s".format(config["TABLES"]["EarlyProbabilities"]))
     result = {
         "oid": oid,
         "result": {
@@ -187,7 +187,7 @@ def get_features():
 
     oid = data["oid"]
     query = sql.SQL(
-        "SELECT periodls_v2_1 as periodls_1, periodls_v2_2 as periodls_2 ,n_samples_1,n_samples_2 FROM {} WHERE oid = %s".format(
+        "SELECT * FROM {} WHERE oid = %s".format(
         config["TABLES"]["Features"]))
     try:
         conn = psql_pool.getconn()
@@ -195,19 +195,14 @@ def get_features():
         cur.execute(query, [oid])
         result = {
             "oid": oid,
-            "result": {}
         }
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
         if resp is None:
-            result["result"]["period"] = {}
+            result["features"] = {}
             return jsonify(result)
         features = dict(zip(colnames, resp))
-        if features["n_samples_1"] > features["n_samples_2"]:
-            features["periodls_2"] = features["periodls_1"]
-        else:
-            features["periodls_1"] = features["periodls_2"]
-        result["result"]["period"] = features
+        result["features"] = features
         cur.close()
         psql_pool.putconn(conn)
         return jsonify(result)
@@ -215,6 +210,43 @@ def get_features():
         current_app.logger.exception(
             "Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
+
+
+@objects_blueprint.route("/get_period", methods=("POST",))
+def get_period():
+    #  Check query_parameters
+    data = request.get_json(force=True)
+    if "oid" not in data:
+        return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
+
+    oid = data["oid"]
+    query = "SELECT * FROM {} WHERE oid = %s".format(config["TABLES"]["Features"])
+    try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
+        cur.execute(query, [oid])
+        result = {
+            "oid": oid,
+        }
+        resp = cur.fetchone()
+        colnames = [desc[0] for desc in cur.description]
+        if resp is None:
+            result["period"] = None
+            return jsonify(result)
+        features = dict(zip(colnames, resp))
+        if features["n_samples_1"] > features["n_samples_2"]:
+            features["period"] = features["PeriodLS_v2_1"]
+        else:
+            features["period"] = features["PeriodLS_v2_2"]
+        result["period"] = features["period"]
+        cur.close()
+        psql_pool.putconn(conn)
+        return jsonify(result)
+    except:
+        current_app.logger.exception(
+            "Error getting detections from ({})".format(oid))
+        return Response("Something went wrong quering the database", 500)
+
 
 
 @objects_blueprint.route("/recent_alerts", methods=("POST",))
