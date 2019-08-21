@@ -195,14 +195,15 @@ def get_features():
         cur.execute(query, [oid])
         result = {
             "oid": oid,
+            "result": {}
         }
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
         if resp is None:
-            result["features"] = {}
+            result["result"]["features"] = {}
             return jsonify(result)
         features = dict(zip(colnames, resp))
-        result["features"] = features
+        result["result"]["features"] = features
         cur.close()
         psql_pool.putconn(conn)
         return jsonify(result)
@@ -227,18 +228,19 @@ def get_period():
         cur.execute(query, [oid])
         result = {
             "oid": oid,
+            "result": {}
         }
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
         if resp is None:
-            result["period"] = None
+            result["result"]["period"] = None
             return jsonify(result)
         features = dict(zip(colnames, resp))
         if features["n_samples_1"] > features["n_samples_2"]:
             features["period"] = features["PeriodLS_v2_1"]
         else:
             features["period"] = features["PeriodLS_v2_2"]
-        result["period"] = features["period"]
+        result["result"]["period"] = features["period"]
         cur.close()
         psql_pool.putconn(conn)
         return jsonify(result)
