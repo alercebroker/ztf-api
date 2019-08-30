@@ -129,6 +129,21 @@ def parse_filters(data):
             if "max" in firstmjd:
                 sql_filters.append(" firstmjd <= %s ")
                 sql_params.append(firstmjd["min"])
+    
+    if "magnitude" in data["query_parameters"]:
+        for band in data["query_parameters"]["magnitude"].keys():
+            sql_filters.append(" mean_magpsf_"+band+" >= %s")
+            sql_params.append(data["query_parameters"]["magnitude"][band]["mean"][0])
+            sql_filters.append(" mean_magpsf_"+band+" <= %s")
+            sql_params.append(data["query_parameters"]["magnitude"][band]["mean"][1])
+            sql_filters.append(" min_magpsf_"+band+" >= %s")
+            sql_params.append(data["query_parameters"]["magnitude"][band]["min"][0])
+            sql_filters.append(" min_magpsf_"+band+" <= %s")
+            sql_params.append(data["query_parameters"]["magnitude"][band]["min"][1])
+            sql_filters.append(" max_magpsf_"+band+" >= %s")
+            sql_params.append(data["query_parameters"]["magnitude"][band]["max"][0])
+            sql_filters.append(" max_magpsf_"+band+" <= %s")
+            sql_params.append(data["query_parameters"]["magnitude"][band]["max"][1])
 
     #If there are filters add to sql
     if len(sql_filters) > 0:
