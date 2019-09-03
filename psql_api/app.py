@@ -15,6 +15,8 @@ config.read(os.path.join(configPath, "config.ini"))
 # Starting Flask API
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 app = Flask(__name__)
+app.config['JSON_SORT_KEYS'] = False
+
 cache.init_app(app)
 CORS(app)
 is_gunicorn = "gunicorn" in os.environ.get("SERVER_SOFTWARE", "")
