@@ -63,3 +63,6 @@ app.register_blueprint(objects_blueprint)
 
 from .variable import variable_blueprint
 app.register_blueprint(variable_blueprint)
+
+from .external import external_blueprint
+app.register_blueprint(external_blueprint)
