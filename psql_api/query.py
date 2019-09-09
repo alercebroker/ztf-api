@@ -167,7 +167,14 @@ def query():
     #Checking other parameters
     records_per_pages = int(data["records_per_pages"]) if "records_per_pages" in data else 20
     page = int(data["page"]) if "page" in data else 1
-    row_number = int(data["total"]) if "total" in data else None
+    try:
+        row_number = int(data["total"])
+    except:
+        if "total" in data:
+            del data["total"]
+        row_number = None
+
+    #row_number = int(data["total"]) if "total" in data else None
     num_pages = int(np.ceil(row_number/records_per_pages)) if "total" in data else None
     sort_by = data["sortBy"] if "sortBy" in data else "nobs"
     sort_by = sort_by if sort_by is not None else "nobs"
@@ -244,7 +251,14 @@ def query_features():
     #Checking other parameters
     records_per_pages = int(data["records_per_pages"]) if "records_per_pages" in data else 20
     page = int(data["page"]) if "page" in data else 1
-    row_number = int(data["total"]) if "total" in data else None
+    try:
+        row_number = int(data["total"])
+    except:
+        if "total" in data:
+            del data["total"]
+
+        row_number = None
+    #row_number = int(data["total"]) if "total" in data else None
     num_pages = int(np.ceil(row_number/records_per_pages)) if "total" in data else None
     sort_by = data["sortBy"] if "sortBy" in data else "nobs"
     sort_by = sort_by if sort_by is not None else "nobs"
