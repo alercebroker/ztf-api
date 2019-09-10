@@ -1,6 +1,9 @@
 from .app import cache, config, psql_pool
 from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context
 from io import StringIO
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+
 import pandas as pd
 import numpy as np
 import requests
@@ -51,10 +54,16 @@ def get_alerce_tns():
     dict_classified = []
 
     for _,row in candidates.iterrows():
+        coords = SkyCoord("%s %s" % (row['RA'], row['DEC']), unit = (u.hourangle, u.deg), frame = 'fk5')
+        row["RA"] = coords.ra.value
+        row["DEC"] = coords.dec.value
         values = [None if (type(r) is float and np.isnan(r)) else r for r in row.values]
         dict_candidates.append(dict(zip(row.keys(),values)))
 
     for _,row in classified.iterrows():
+        coords = SkyCoord("%s %s" % (row['RA'], row['DEC']), unit = (u.hourangle, u.deg), frame = 'fk5')
+        row["RA"] = coords.ra.value
+        row["DEC"] = coords.dec.value
         values = [None if (type(r) is float and np.isnan(r)) else r for r in row.values]
         dict_classified.append(dict(zip(row.keys(),values)))
 
