@@ -26,6 +26,7 @@ def get_tns_df(searchweb,searchoptions):
     df = pd.read_csv(StringIO(response.text))
     urls = [f"http://alerce.online/object/{oid}" for oid in df['Disc. Internal Name']]
     df['url'] = urls
+    df.sort_values("Discovery Date (UT)",ascending=False)
     return df
 
 @external_blueprint.route("/get_alerce_tns")
