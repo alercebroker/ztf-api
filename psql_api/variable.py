@@ -22,8 +22,7 @@ def get_periodogram():
             periodogram = {"fid":fid, "frequencies": freq.tolist(), "periods": per.tolist() }
             try:
                 fbest, pbest = my_per.get_best_frequencies()
-                objperiod = 1. / fbest
-                periodogram["best_period"] =  objperiod.tolist()
+                periodogram["best_freq"] =  fbest.tolist()
                 periodograms.append(periodogram)
             except AttributeError:
                 periodograms.append(periodogram)
