@@ -17,12 +17,12 @@ def get_periodogram():
         periodograms = []
         df = pd.read_sql(query, conn)
         for fid, data in df.groupby("fid"):
-            my_per = P4J.periodogram()
+            my_per = P4J.periodogram(method='QMIEU')
             my_per.set_data(data.mjd.values,
                             data.magpsf_corr.values, data.sigmapsf_corr.values)
             my_per.frequency_grid_evaluation(
-                fmin=0.0, fmax=25.0, fresolution=1e-1)
-            my_per.finetune_best_frequencies()
+                fmin=0.0, fmax=5.0, fresolution=1e-4)
+            my_per.finetune_best_frequencies(fresolution=1e-6, n_local_optima=1)
             freq, per = my_per.get_periodogram()
             periodogram = {
                 "fid": fid, "frequencies": freq.tolist(), "potency": per.tolist()}
