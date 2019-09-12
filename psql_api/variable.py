@@ -21,8 +21,8 @@ def get_periodogram():
             my_per.set_data(data.mjd.values,
                             data.magpsf_corr.values, data.sigmapsf_corr.values)
             my_per.frequency_grid_evaluation(
-                fmin=0.0, fmax=5.0, fresolution=1e-4)
-            my_per.finetune_best_frequencies(fresolution=1e-6, n_local_optima=1)
+                fmin=0.0, fmax=5.0, fresolution=1e-3)
+            my_per.finetune_best_frequencies(fresolution=1e-5, n_local_optima=1)
             freq, per = my_per.get_periodogram()
             periodogram = {
                 "fid": fid, "frequencies": freq.tolist(), "potency": per.tolist()}
