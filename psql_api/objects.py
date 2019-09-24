@@ -1,7 +1,8 @@
-from .app import cur, cache
+from .app import cache, config, psql_pool
 from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context
 import math
 from datetime import datetime, timedelta
+from psycopg2 import sql
 
 objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
 
@@ -14,8 +15,10 @@ def get_detections():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT cast(candid as text) as candid_str, * FROM detections WHERE oid = %s ORDER BY mjd ASC"
+    query = sql.SQL("SELECT cast(candid as text) as candid_str, * FROM detections WHERE oid = %s ORDER BY mjd ASC")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [oid])
         result = {
             "oid": oid,
@@ -32,6 +35,8 @@ def get_detections():
             alert = dict(zip(colnames, row)) if row else None
             alerts.append(alert)
         result["result"]["detections"] = alerts
+        cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
 
     except:
@@ -47,8 +52,10 @@ def get_non_detections():
     if "oid" not in data:
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
     oid = data["oid"]
-    query = "SELECT * FROM non_detections WHERE oid = %s ORDER BY mjd ASC"
+    query = sql.SQL("SELECT * FROM non_detections WHERE oid = %s ORDER BY mjd ASC")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [oid])
         result = {
             "oid": oid,
@@ -61,6 +68,8 @@ def get_non_detections():
             alert = dict(zip(colnames, row)) if row else None
             alerts.append(alert)
         result["result"]["non_detections"] = alerts
+        cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
 
     except:
@@ -77,8 +86,10 @@ def get_stats():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT * FROM objects WHERE oid = %s"
+    query = sql.SQL("SELECT * FROM objects WHERE oid = %s")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [oid])
         result = {
             "oid": oid,
@@ -99,6 +110,8 @@ def get_stats():
             else:
                 obj[colmap[j]] = col
         result["result"]["stats"] = obj
+        cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
     except:
         current_app.logger.exception(
@@ -114,8 +127,8 @@ def get_probabilities():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query_prob = "SELECT * FROM probabilities WHERE oid = %s"
-    query_stamp = "SELECT * FROM stamp_classification WHERE oid = %s"
+    query_prob = sql.SQL("SELECT * FROM {} WHERE oid = %s".format(config["TABLES"]["LateProbabilities"]))
+    query_stamp = sql.SQL("SELECT * FROM {} WHERE oid = %s".format(config["TABLES"]["EarlyProbabilities"]))
     result = {
         "oid": oid,
         "result": {
@@ -126,17 +139,25 @@ def get_probabilities():
         }
     }
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query_prob, [oid])
         resp_prob = cur.fetchone()
         column_prob = [desc[0] for desc in cur.description]
+        cur.close()
+        psql_pool.putconn(conn)
     except:
         current_app.logger.exception(
             "Error getting detections from ({})".format(oid))
         resp_prob = "fail"
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query_stamp, [oid])
         resp_stamp = cur.fetchone()
         column_stamp = [desc[0] for desc in cur.description]
+        cur.close()
+        psql_pool.putconn(conn)
     except:
         current_app.logger.exception(
             "Error getting detections from ({})".format(oid))
@@ -165,8 +186,12 @@ def get_features():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT periodls_1, periodls_2,n_samples_1,n_samples_2 FROM features WHERE oid = %s"
+    query = sql.SQL(
+        "SELECT * FROM {} WHERE oid = %s".format(
+        config["TABLES"]["Features"]))
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [oid])
         result = {
             "oid": oid,
@@ -175,19 +200,55 @@ def get_features():
         resp = cur.fetchone()
         colnames = [desc[0] for desc in cur.description]
         if resp is None:
-            result["result"]["period"] = {}
+            result["result"]["features"] = {}
             return jsonify(result)
         features = dict(zip(colnames, resp))
-        if features["n_samples_1"] > features["n_samples_2"]:
-            features["periodls_2"] = features["periodls_1"]
-        else:
-            features["periodls_1"] = features["periodls_2"]
-        result["result"]["period"] = features
+        result["result"]["features"] = features
+        cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
     except:
         current_app.logger.exception(
             "Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
+
+
+@objects_blueprint.route("/get_period", methods=("POST",))
+def get_period():
+    #  Check query_parameters
+    data = request.get_json(force=True)
+    if "oid" not in data:
+        return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
+
+    oid = data["oid"]
+    query = "SELECT * FROM {} WHERE oid = %s".format(config["TABLES"]["Features"])
+    try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
+        cur.execute(query, [oid])
+        result = {
+            "oid": oid,
+            "result": {}
+        }
+        resp = cur.fetchone()
+        colnames = [desc[0] for desc in cur.description]
+        if resp is None:
+            result["result"]["period"] = None
+            return jsonify(result)
+        features = dict(zip(colnames, resp))
+        if features["n_samples_1"] > features["n_samples_2"]:
+            features["period"] = features["PeriodLS_v2_1"]
+        else:
+            features["period"] = features["PeriodLS_v2_2"]
+        result["result"]["period"] = features["period"]
+        cur.close()
+        psql_pool.putconn(conn)
+        return jsonify(result)
+    except:
+        current_app.logger.exception(
+            "Error getting detections from ({})".format(oid))
+        return Response("Something went wrong quering the database", 500)
+
 
 
 @objects_blueprint.route("/recent_alerts", methods=("POST",))
@@ -203,8 +264,10 @@ def recent_alerts():
     else:
         mjd = data["mjd"]
         mjd = mjd - int(hours/24)
-    query = "SELECT count(oid) from detections where mjd >= %s"
+    query = sql.SQL("SELECT count(oid) from detections where mjd >= %s")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [mjd])
         result = {
             "result": {}
@@ -219,6 +282,8 @@ def recent_alerts():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"] = count
+        cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
 
     except:
@@ -239,8 +304,10 @@ def recent_objects():
     else:
         mjd = data["mjd"]
         mjd = mjd - int(hours/24)
-    query = "SELECT count(oid) from objects where lastmjd >= %s"
+    query = sql.SQL("SELECT count(oid) from objects where lastmjd >= %s")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query, [mjd])
         result = {
             "result": {}
@@ -255,6 +322,8 @@ def recent_objects():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"] = count
+        cur.close()
+        psql_pool.putconn(conn)
         return jsonify(result)
 
     except:
@@ -268,8 +337,11 @@ def classified_objects():
     result = {
         "result": {}
     }
-    query = "SELECT count(oid) from objects where classxmatch is not null"
+    query = sql.SQL(
+        "SELECT count(oid) from objects where classxmatch is not null")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query)
         resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
@@ -281,12 +353,16 @@ def classified_objects():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"]["xmatch"] = count["count"]
+        cur.close()
+        psql_pool.putconn(conn)
     except:
         current_app.logger.exception("Error getting classified xmatch objects")
         return Response("Something went wrong quering the database", 500)
 
-    query = "SELECT count(oid) from objects where classrf is not null"
+    query = sql.SQL("SELECT count(oid) from objects where classrf is not null")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query)
         resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
@@ -298,12 +374,18 @@ def classified_objects():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"]["rf"] = count["count"]
+        cur.close()
+        psql_pool.putconn(conn)
     except:
-        current_app.logger.exception("Error getting classified random forest objects")
+        current_app.logger.exception(
+            "Error getting classified random forest objects")
         return Response("Something went wrong quering the database", 500)
-    
-    query = "SELECT count(oid) from objects where classearly is not null"
+
+    query = sql.SQL(
+        "SELECT count(oid) from objects where classearly is not null")
     try:
+        conn = psql_pool.getconn()
+        cur = conn.cursor()
         cur.execute(query)
         resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
@@ -315,8 +397,11 @@ def classified_objects():
                     row[j] = None
             count = dict(zip(colnames, row)) if row else None
         result["result"]["early"] = count["count"]
+        cur.close()
+        psql_pool.putconn(conn)
     except:
-        current_app.logger.exception("Error getting classified random forest objects")
+        current_app.logger.exception(
+            "Error getting classified random forest objects")
         return Response("Something went wrong quering the database", 500)
 
     return jsonify(result)
