@@ -1,5 +1,5 @@
-from .app import conn, cache
-from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context
+from .app import  cache
+from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context,g
 import P4J
 import pandas as pd
 variable_blueprint = Blueprint(
@@ -15,6 +15,7 @@ def get_periodogram():
         oid)
     try:
         periodograms = []
+        conn = g.db
         df = pd.read_sql(query, conn)
         for fid, data in df.groupby("fid"):
             my_per = P4J.periodogram()
