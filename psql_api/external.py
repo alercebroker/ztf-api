@@ -38,7 +38,7 @@ def get_alerce_tns():
     searchweb = "https://wis-tns.weizmann.ac.il/search?"
     searchoptions = {
         "groupid[]":74,
-        "num_page" : "1000",  # number of rows per page
+        "num_page" : 500,  # number of rows per page
         "internal_name" : "ZTF",
         "classified_sne" : 0,
         "unclassified_at": 0,
