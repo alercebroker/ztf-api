@@ -1,5 +1,5 @@
 from psycopg2 import sql
-from .app import config, classes, psql_pool
+from .app import config
 from flask import Response,stream_with_context,request,Blueprint,current_app,g,jsonify
 
 from astropy import units as u
@@ -129,7 +129,7 @@ def parse_filters(data):
             if "max" in firstmjd:
                 sql_filters.append(" firstmjd <= %s ")
                 sql_params.append(firstmjd["min"])
-    
+
     if "magnitude" in data["query_parameters"]:
         for band in data["query_parameters"]["magnitude"].keys():
             sql_filters.append(" mean_magpsf_"+band+" >= %s")
@@ -184,7 +184,7 @@ def query():
         sort_desc = "DESC"
     count_query,sql_query,sql_params = parse_filters(data)
 
-    connection  = psql_pool.getconn()
+    connection  = g.db
 
 
     if row_number is None:
@@ -237,7 +237,7 @@ def query():
         return result
 
     result = generateResp()
-    psql_pool.putconn(connection)
+
     return jsonify(result)
 
 
@@ -281,7 +281,7 @@ def query_features():
     count_query = " WHERE ".join(count_query)
     sql_query = " WHERE ".join(sql_query)
 
-    connection  = psql_pool.getconn()
+    connection  = g.db
 
 
     if row_number is None:
@@ -334,7 +334,7 @@ def query_features():
         return result
 
     result = generateResp()
-    psql_pool.putconn(connection)
+
     return jsonify(result)
 
 
@@ -345,8 +345,8 @@ def get_sql():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     _, sql, params = parse_filters(data)
-    connection  = psql_pool.getconn()
+    connection  = g.db
     sql = sql.replace('oid=%s',"oid='%s'")
     sql = sql.replace('%s','{}')
-    psql_pool.putconn(connection)
+
     return sql.format(*params)
