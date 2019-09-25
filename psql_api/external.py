@@ -57,7 +57,7 @@ def get_alerce_tns():
         row["RA"] = coords.ra.value
         row["DEC"] = coords.dec.value
         values = [None if (type(r) is float and np.isnan(r)) else r for r in row.values]
-        if type(row["Obj. Type"]) is not str:
+        if type(row["Obj. Type"]) is str:
             dict_classified.append(dict(zip(row.keys(),values)))
         else:
             dict_candidates.append(dict(zip(row.keys(),values)))
