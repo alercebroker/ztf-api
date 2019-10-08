@@ -250,6 +250,40 @@ def get_period():
 
 
 
+@objects_blueprint.route("/get_magref", methods=("POST",))
+def get_magref():
+    #  Check query_parameters
+    data = request.get_json(force=True)
+    if "oid" not in data:
+        return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
+
+    oid = data["oid"]
+    query = "SELECT * FROM magref WHERE oid = %s"
+    try:
+        conn = g.db
+        cur = conn.cursor()
+        cur.execute(query, [oid])
+        result = {
+            "oid": oid,
+            "result": {}
+        }
+        resp = cur.fetchone()
+        colnames = [desc[0] for desc in cur.description]
+        if resp is None:
+            result["result"] = []
+            return jsonify(result)
+        magref = dict(zip(colnames, resp))
+        result["result"] = magref
+
+        cur.close()
+
+        return jsonify(result)
+    except:
+        current_app.logger.exception(
+            "Error getting detections from ({})".format(oid))
+        return Response("Something went wrong quering the database", 500)
+
+
 @objects_blueprint.route("/recent_alerts", methods=("POST",))
 @cache.memoize(3600)
 def recent_alerts():
