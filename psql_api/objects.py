@@ -267,13 +267,18 @@ def get_magref():
             "oid": oid,
             "result": {}
         }
-        resp = cur.fetchone()
+        resp = cur.fetchall()
         colnames = [desc[0] for desc in cur.description]
         if resp is None:
             result["result"] = []
             return jsonify(result)
-        magref = dict(zip(colnames, resp))
-        result["result"] = magref
+
+        magrefs = []
+        for row in resp:
+            magref = dict(zip(colnames, row))
+            del magref["oid"]
+            magrefs.append(magref)
+        result["result"] = magrefs
 
         cur.close()
 
