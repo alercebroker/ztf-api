@@ -99,6 +99,24 @@ def parse_filters(data):
                 sql_filters.append("{}>= %s".format(filter))
                 sql_params.append(filters[filter])
 
+            if "magpsf" in filter:
+                mag_filter = filters[filter]
+                if "min" in mag_filter:
+                    sql_filters.append(f" {filter} <= %s ")
+                    sql_params.append(mag_filter["min"])
+                if "max" in mag_filter:
+                    sql_filters.append(f" {filter} >= %s ")
+                    sql_params.append(mag_filter["max"])
+
+            if "magap" in filter:
+                mag_filter = filters[filter]
+                if "min" in mag_filter:
+                    sql_filters.append(f" {filter} <= %s ")
+                    sql_params.append(mag_filter["min"])
+                if "max" in mag_filter:
+                    sql_filters.append(f" {filter} >= %s ")
+                    sql_params.append(mag_filter["max"])
+
 
     if "coordinates" in data["query_parameters"]:
         filters = data["query_parameters"]
@@ -128,22 +146,8 @@ def parse_filters(data):
                 sql_params.append(firstmjd["min"])
             if "max" in firstmjd:
                 sql_filters.append(" firstmjd <= %s ")
-                sql_params.append(firstmjd["min"])
+                sql_params.append(firstmjd["max"])
 
-    if "magnitude" in data["query_parameters"]:
-        for band in data["query_parameters"]["magnitude"].keys():
-            sql_filters.append(" mean_magpsf_"+band+" >= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["mean"][0])
-            sql_filters.append(" mean_magpsf_"+band+" <= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["mean"][1])
-            sql_filters.append(" min_magpsf_"+band+" >= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["min"][0])
-            sql_filters.append(" min_magpsf_"+band+" <= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["min"][1])
-            sql_filters.append(" max_magpsf_"+band+" >= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["max"][0])
-            sql_filters.append(" max_magpsf_"+band+" <= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["max"][1])
 
     #If there are filters add to sql
     if len(sql_filters) > 0:
