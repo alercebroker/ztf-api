@@ -102,10 +102,10 @@ def parse_filters(data):
             if "magpsf" in filter or "magap" in filter:
                 mag_filter = filters[filter]
                 if "min" in mag_filter:
-                    sql_filters.append(f" {filter} <= %s ")
+                    sql_filters.append(f" {filter} >= %s ")
                     sql_params.append(mag_filter["min"])
                 if "max" in mag_filter:
-                    sql_filters.append(f" {filter} >= %s ")
+                    sql_filters.append(f" {filter} <= %s ")
                     sql_params.append(mag_filter["max"])
 
 
