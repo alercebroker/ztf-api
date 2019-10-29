@@ -4,6 +4,7 @@ import math
 from flask import g
 from datetime import datetime, timedelta
 from psycopg2 import sql
+import os
 
 objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
 
@@ -126,8 +127,8 @@ def get_probabilities():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query_prob = sql.SQL("SELECT * FROM {} WHERE oid = %s".format(config["TABLES"]["LateProbabilities"]))
-    query_stamp = sql.SQL("SELECT * FROM {} WHERE oid = %s".format(config["TABLES"]["EarlyProbabilities"]))
+    query_prob = sql.SQL("SELECT * FROM {} WHERE oid = %s".format(os.environ["LATE_PROBABILITIES_TABLE"]))
+    query_stamp = sql.SQL("SELECT * FROM {} WHERE oid = %s".format(os.environ["EARLY_PROBABILITIES_TABLE"]))
     result = {
         "oid": oid,
         "result": {
@@ -187,7 +188,7 @@ def get_features():
     oid = data["oid"]
     query = sql.SQL(
         "SELECT * FROM {} WHERE oid = %s".format(
-        config["TABLES"]["Features"]))
+        os.environ["FEATURES_TABLE"]))
     try:
         conn = g.db
         cur = conn.cursor()
@@ -220,7 +221,7 @@ def get_period():
         return Response('{"status": "error", "text": "Malformed Query"}\n', 400)
 
     oid = data["oid"]
-    query = "SELECT * FROM {} WHERE oid = %s".format(config["TABLES"]["Features"])
+    query = "SELECT * FROM {} WHERE oid = %s".format(os.environ["FEATURES_TABLE"])
     try:
         conn = g.db
         cur = conn.cursor()

@@ -1,4 +1,5 @@
 import psycopg2
+import os
 from flask import current_app, g
 from flask.cli import with_appcontext
 
@@ -7,11 +8,11 @@ from .app import config
 def get_db():
     current_app.logger.debug("Creating connection")
     if 'db' not in g:
-        g.db = psycopg2.connect(user = config["DATABASE"]["User"],
-                      password = config["DATABASE"]["Pass"],
-                      host = config["DATABASE"]["Host"],
-                      port = config["DATABASE"]["Port"],
-                      database = config["DATABASE"]["Database"])
+        g.db = psycopg2.connect(user = os.environ["ZTF_USER"],
+                      password = os.environ["ZTF_PASSWORD"],
+                      host = os.environ["ZTF_HOST"],
+                      port = int(os.environ["ZTF_PORT"]),
+                      database = os.environ["ZTF_DATABASE"])
     # return g.db
 
 

@@ -1,9 +1,0 @@
-server {
-    listen 8085;
-    server_name alerce.online www.alerce.online;
-
-    location /searches {
-        include proxy_params;
-        proxy_pass http://unix:/opt/alerce/query-postgres-api/sock/psqlapi.sock;
-    }
-}
