@@ -3,8 +3,6 @@ import os
 from flask import current_app, g
 from flask.cli import with_appcontext
 
-from .app import config
-
 def get_db():
     current_app.logger.debug("Creating connection")
     if 'db' not in g:

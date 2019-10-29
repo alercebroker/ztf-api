@@ -1,16 +1,9 @@
 import os
-import configparser
 from psycopg2 import connect, sql, pool
 from flask_cors import CORS
 from flask import Flask
 from flask_caching import Cache
 import logging
-
-# Reading Config File
-filePath = os.path.dirname(os.path.abspath(__file__))
-configPath = os.path.join(filePath, "..", "config")
-config = configparser.ConfigParser()
-config.read(os.path.join(configPath, "config.ini"))
 
 # Starting Flask API
 cache = Cache(config={'CACHE_TYPE': 'simple'})

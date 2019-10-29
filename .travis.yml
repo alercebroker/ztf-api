@@ -1,0 +1,17 @@
+language: python
+
+services:
+  - docker
+
+env:
+  - FEATURES_TABLE=features_v2 LATE_PROBABILITIES_TABLE=late_probabilities_v2 EARLY_PROBABILITIES_TABLE=stamp_classification
+
+before_install:
+  - openssl aes-256-cbc -K $encrypted_a81041890f6d_key -iv $encrypted_a81041890f6d_iv -in .travis.secrets.enc -out .travis.secrets -d
+  - source .travis.secrets
+  - docker build -t psql_api .
+  - docker run -d --name psql_api -p 8085:8085 -e ZTF_HOST=$ZTF_HOST -e ZTF_USER=$ZTF_USER -e ZTF_PASSWORD=$ZTF_PASSWORD -e ZTF_DATABASE=$ZTF_DATABASE -e FEATURES_TABLE=$FEATURES_TABLE -e LATE_PROBABILITIES_TABLE=$LATE_PROBABILITIES_TABLE -e EARLY_PROBABILITIES_TABLE=$EARLY_PROBABILITIES_TABLE psql_api
+  - pip install requests
+
+script:
+  - cd tests && ./run_tests.sh

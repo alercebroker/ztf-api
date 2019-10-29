@@ -1,5 +1,4 @@
 from psycopg2 import sql
-from .app import config
 from flask import Response,stream_with_context,request,Blueprint,current_app,g,jsonify
 
 from astropy import units as u
