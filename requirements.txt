@@ -1,6 +1,9 @@
-Flask-Caching
-Flask
-psycopg2-binary
-flask_cors
-pandas
-P4J
+Flask-Caching==1.7.2
+Flask==1.1.1
+psycopg2-binary==2.8.3
+flask_cors==3.0.8
+pandas==0.24.2
+numpy==1.16.4
+P4J==0.27
+astropy==3.2.1
+requests==2.22.0
