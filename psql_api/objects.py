@@ -8,6 +8,7 @@ import os
 
 objects_blueprint = Blueprint('objects', __name__, template_folder='templates')
 
+#Get object detection
 @objects_blueprint.route("/get_detections", methods=("POST",))
 def get_detections():
     #  Check query_parameters
@@ -44,7 +45,7 @@ def get_detections():
             "Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
 
-
+#Get non detections from an object
 @objects_blueprint.route("/get_non_detections", methods=("POST",))
 def get_non_detections():
     #  Check query_parameters
@@ -78,6 +79,7 @@ def get_non_detections():
         return Response("Something went wrong quering the database", 500)
 
 
+#Get stats for an object
 @objects_blueprint.route("/get_stats", methods=("POST",))
 def get_stats():
     #  Check query_parameters
@@ -99,6 +101,7 @@ def get_stats():
         colnames = [desc[0] for desc in cur.description]
         colmap = dict(zip(list(range(len(colnames))), colnames))
 
+        #Casting infty and nan to None
         obj = {}
         for j, col in enumerate(resp):
             if col == "id":
@@ -119,6 +122,7 @@ def get_stats():
         return Response("Something went wrong quering the database", 500)
 
 
+#Get probabilities from late and early classifier
 @objects_blueprint.route("/get_probabilities", methods=("POST",))
 def get_probabilities():
     #  Check query_parameters
@@ -178,6 +182,7 @@ def get_probabilities():
         return jsonify(result)
 
 
+#Get features for an object
 @objects_blueprint.route("/get_features", methods=("POST",))
 def get_features():
     #  Check query_parameters
@@ -212,7 +217,8 @@ def get_features():
             "Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
 
-
+#Get period for an object
+#using PeriodLS_v2_1 and PeriodLS_v2_2
 @objects_blueprint.route("/get_period", methods=("POST",))
 def get_period():
     #  Check query_parameters
@@ -250,7 +256,7 @@ def get_period():
         return Response("Something went wrong quering the database", 500)
 
 
-
+#Get reference magnitudes for an object
 @objects_blueprint.route("/get_magref", methods=("POST",))
 def get_magref():
     #  Check query_parameters
@@ -288,6 +294,7 @@ def get_magref():
         current_app.logger.exception(
             "Error getting detections from ({})".format(oid))
         return Response("Something went wrong quering the database", 500)
+
 
 
 @objects_blueprint.route("/recent_alerts", methods=("POST",))

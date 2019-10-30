@@ -11,7 +11,7 @@ before_install:
   - source .travis.secrets
   - docker build -t psql_api .
   - docker run -d --name psql_api -p 8085:8085 -e ZTF_HOST=$ZTF_HOST -e ZTF_USER=$ZTF_USER -e ZTF_PASSWORD=$ZTF_PASSWORD -e ZTF_DATABASE=$ZTF_DATABASE -e FEATURES_TABLE=$FEATURES_TABLE -e LATE_PROBABILITIES_TABLE=$LATE_PROBABILITIES_TABLE -e EARLY_PROBABILITIES_TABLE=$EARLY_PROBABILITIES_TABLE psql_api
-  - pip install requests
+  - pip install requests==2.22.0 pandas==0.24.2
 
 script:
   - cd tests && ./run_tests.sh

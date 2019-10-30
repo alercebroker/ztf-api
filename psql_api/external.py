@@ -12,14 +12,14 @@ import time
 
 external_blueprint = Blueprint('external', __name__, template_folder='templates')
 
-
+#Create the tns url
 def dourl(searchweb, searchoptions):
     url = searchweb
     for key in searchoptions.keys():
         url = "%s&%s=%s" % (url, key, searchoptions[key])
     return url
 
-
+#Get a dataframe with tns data
 def get_tns_df(searchweb,searchoptions):
     urlpage = dourl(searchweb,searchoptions)
     t0 = time.time()
@@ -31,7 +31,8 @@ def get_tns_df(searchweb,searchoptions):
     return df
 
 
-
+#Get last month ALeRCE tns data webscrapping the tns page
+#saves result in cache for 60 min
 @external_blueprint.route("/get_alerce_tns")
 @cache.memoize(60*60)
 def get_alerce_tns():
@@ -70,7 +71,3 @@ def get_alerce_tns():
     }
 
     return jsonify(result)
-
-
-
-# atexit.register(lambda: scheduler.shutdown(wait=False))

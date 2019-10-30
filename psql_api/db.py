@@ -1,8 +1,9 @@
 import psycopg2
 import os
 from flask import current_app, g
-from flask.cli import with_appcontext
 
+#Create a db connection and save to
+#app global variable (g)
 def get_db():
     current_app.logger.debug("Creating connection")
     if 'db' not in g:
@@ -11,9 +12,8 @@ def get_db():
                       host = os.environ["ZTF_HOST"],
                       port = int(os.environ["ZTF_PORT"]),
                       database = os.environ["ZTF_DATABASE"])
-    # return g.db
 
-
+#Close the connection
 def close_db(e=None):
     db = g.pop('db', None)
     current_app.logger.debug("Closing connection")
@@ -21,7 +21,8 @@ def close_db(e=None):
         db.commit()
         db.close()
 
-
+#Add create and close behavior on request
+#arrival and close (avoid hanging connections)
 def init_app(app):
     app.before_request(get_db)
     app.teardown_appcontext(close_db)

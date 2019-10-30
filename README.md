@@ -1,14 +1,17 @@
 # [ALeRCE](http://alerce.science/) ZTF API
+  [![Build Status](https://travis-ci.com/alercebroker/query-postgres-api.svg?token=o75gTmbE8jQjf4RpsqHV&branch=master)](https://travis-ci.com/alercebroker/query-postgres-api) [![Documentation Status](https://readthedocs.org/projects/alerceapi/badge/?version=latest)](https://alerceapi.readthedocs.io/en/latest/?badge=latest)
+
+
 
 [ALeRCE](http://alerce.science/) API to query the ZTF Postgresql Database and other external catalogs.
 
 The API is currently developed in [Flask](https://flask.palletsprojects.com/en/1.1.x/) Framework, and deployed inside a [Docker](https://www.docker.com/) container.
 
-This API is used in ALeRCE [ZTF-Explorer](https://alerce.online/) to query the database and display the information.
+This API is used in ALeRCE [ZTF-Explorer](https://alerce.online/) and SN Hunter [ZTF-Explorer](https://snhunter.alerce.online/) to query the database and display the information.
 
 ## Documentation
 
-A provisonary Documentation can be found [here](https://github.com/alercebroker/usecases/blob/master/api/ALeRCE%20ZTF%20DB%20API.md)
+The API documentation can be found [here](https://alerceapi.readthedocs.io/en/latest/ztf_db.html).
 
 ## Building image
 
