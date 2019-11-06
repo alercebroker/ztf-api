@@ -1,5 +1,5 @@
 # [ALeRCE](http://alerce.science/) ZTF API
-  [![Build Status](https://travis-ci.com/alercebroker/query-postgres-api.svg?token=o75gTmbE8jQjf4RpsqHV&branch=master)](https://travis-ci.com/alercebroker/query-postgres-api) [![Documentation Status](https://readthedocs.org/projects/alerceapi/badge/?version=latest)](https://alerceapi.readthedocs.io/en/latest/?badge=latest)
+  [![Build Status](https://travis-ci.com/alercebroker/ztf-api.svg?token=o75gTmbE8jQjf4RpsqHV&branch=master)](https://travis-ci.com/alercebroker/ztf-api) [![Documentation Status](https://readthedocs.org/projects/alerceapi/badge/?version=latest)](https://alerceapi.readthedocs.io/en/latest/?badge=latest)
 
 
 
