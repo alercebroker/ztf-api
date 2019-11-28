@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 
 query_blueprint = Blueprint('query', __name__, template_folder='templates')
 
+
+#Classmap from id to name
+#TODO: Get this from DB
 class_map = {
     "agn":18,
     "vs":20,
@@ -36,20 +39,32 @@ class_map = {
     "rrl":5
 }
 
+#Sanity check of OID
 def parse_oid(oid):
     x = re.compile("^ZTF\d\d[a-zA-Z0-9]*")
     res = x.match(oid)
     return res.group()
 
 
+"""
+ Parse query_parameters dict.
+ Returns two queries, one to count the number of rows (used for total) and other
+ to return the objects itself.
+
+ The sql_filter array will store the WHERE statement filters with the %s wildcard
+ for the parameters and sql_params will store the params itself.
+
+"""
 def parse_filters(data):
     #Base SQL statement
     sql_str = "SELECT * FROM objects"
     count_sql_str = sql_str.replace("*","COUNT(*)")
 
     #Array of filters
-    sql_filters = []
-    sql_params = []
+    sql_filters = [] #Here we store the where statements
+    sql_params = [] # and here the parameters
+
+
     if "filters" in data["query_parameters"]:
         filters = data["query_parameters"]["filters"]
 
@@ -69,10 +84,11 @@ def parse_filters(data):
                     sql_params.append(filters["nobs"]["max"])
 
             # CLASS FILTER
+            # The class can be a str or an int or Array
             if filter.startswith("class"):
                 if "classified" == filters[filter]:
                     sql_filters.append("{} is not null".format(filter))
-                    # sql_params.append(filter)
+
                 elif "not classified" == filters[filter]:
                     sql_filters.append("{} is null".format(filter))
                     sql_params.append(filter)
@@ -95,9 +111,22 @@ def parse_filters(data):
                         c = cnew
                         sql_filters.append(" {} IN ({}) ".format(filter,",".join(["%s"]*len(c))))
                         sql_params.extend(c)
+
+
+            #pclass* are the probabilities of the class
             if filter.startswith("pclass"):
                 sql_filters.append("{}>= %s".format(filter))
                 sql_params.append(filters[filter])
+
+            #magnitudes filters
+            if "magpsf" in filter or "magap" in filter:
+                mag_filter = filters[filter]
+                if "min" in mag_filter:
+                    sql_filters.append(f" {filter} >= %s ")
+                    sql_params.append(mag_filter["min"])
+                if "max" in mag_filter:
+                    sql_filters.append(f" {filter} <= %s ")
+                    sql_params.append(mag_filter["max"])
 
 
     if "coordinates" in data["query_parameters"]:
@@ -144,6 +173,7 @@ def parse_filters(data):
             sql_params.append(data["query_parameters"]["magnitude"][band]["max"][0])
             sql_filters.append(" max_magpsf_"+band+" <= %s")
             sql_params.append(data["query_parameters"]["magnitude"][band]["max"][1])
+            sql_params.append(firstmjd["max"])
 
     #If there are filters add to sql
     if len(sql_filters) > 0:
@@ -174,7 +204,6 @@ def query():
             del data["total"]
         row_number = None
 
-    #row_number = int(data["total"]) if "total" in data else None
     num_pages = int(np.ceil(row_number/records_per_pages)) if "total" in data else None
     sort_by = data["sortBy"] if "sortBy" in data else "nobs"
     sort_by = sort_by if sort_by is not None else "nobs"
@@ -186,7 +215,7 @@ def query():
 
     connection  = g.db
 
-
+    #Counting total if row_number is not set
     if row_number is None:
         cur = connection.cursor(name="ALERCE Big Query Counter Cursor")
         current_app.logger.debug(count_query)
