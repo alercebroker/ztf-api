@@ -137,7 +137,7 @@ def get_probabilities():
         "oid": oid,
         "result": {
             "probabilities": {
-                "random_forest": {},
+                "late_classifier": {},
                 "early_classifier": {}
             }
         }
@@ -170,10 +170,10 @@ def get_probabilities():
         return Response("Something went wrong quering the database", 500)
     else:
         if resp_prob is None or resp_prob == "fail":
-            result["result"]["probabilities"]["random_forest"] = {}
+            result["result"]["probabilities"]["late_classifier"] = {}
         else:
             probs_prob = dict(zip(column_prob, resp_prob))
-            result["result"]["probabilities"]["random_forest"] = probs_prob
+            result["result"]["probabilities"]["late_classifier"] = probs_prob
         if resp_stamp is None or resp_stamp == "fail":
             result["result"]["probabilities"]["early_classifier"] = {}
         else:
@@ -424,7 +424,7 @@ def classified_objects():
 
     except:
         current_app.logger.exception(
-            "Error getting classified random forest objects")
+            "Error getting late classifier objects")
         return Response("Something went wrong quering the database", 500)
 
     query = sql.SQL(
@@ -447,7 +447,7 @@ def classified_objects():
 
     except:
         current_app.logger.exception(
-            "Error getting classified random forest objects")
+            "Error getting classified late classifier objects")
         return Response("Something went wrong quering the database", 500)
 
     return jsonify(result)
