@@ -1,4 +1,4 @@
-from .app import cache, config
+from .app import cache
 from flask import Blueprint, Response, current_app, request, jsonify, stream_with_context
 import math
 from flask import g

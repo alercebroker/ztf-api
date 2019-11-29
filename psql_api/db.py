@@ -2,7 +2,6 @@ import psycopg2
 from flask import current_app, g
 from flask.cli import with_appcontext
 
-from .app import config
 import os
 
 #Create a db connection and save to
