@@ -1,8 +1,6 @@
 import psycopg2
-from flask import current_app, g
-from flask.cli import with_appcontext
-
 import os
+from flask import current_app, g
 
 #Create a db connection and save to
 #app global variable (g)

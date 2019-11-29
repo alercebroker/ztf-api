@@ -10,9 +10,6 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
 
-from .db import init_app
-init_app(app)
-
 #Adding database connection interface to app
 from .db import init_app
 init_app(app)

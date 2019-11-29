@@ -49,10 +49,8 @@ def parse_oid(oid):
  Parse query_parameters dict.
  Returns two queries, one to count the number of rows (used for total) and other
  to return the objects itself.
-
  The sql_filter array will store the WHERE statement filters with the %s wildcard
  for the parameters and sql_params will store the params itself.
-
 """
 def parse_filters(data):
     #Base SQL statement
@@ -156,23 +154,7 @@ def parse_filters(data):
                 sql_params.append(firstmjd["min"])
             if "max" in firstmjd:
                 sql_filters.append(" firstmjd <= %s ")
-                sql_params.append(firstmjd["min"])
-
-    if "magnitude" in data["query_parameters"]:
-        for band in data["query_parameters"]["magnitude"].keys():
-            sql_filters.append(" mean_magpsf_"+band+" >= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["mean"][0])
-            sql_filters.append(" mean_magpsf_"+band+" <= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["mean"][1])
-            sql_filters.append(" min_magpsf_"+band+" >= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["min"][0])
-            sql_filters.append(" min_magpsf_"+band+" <= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["min"][1])
-            sql_filters.append(" max_magpsf_"+band+" >= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["max"][0])
-            sql_filters.append(" max_magpsf_"+band+" <= %s")
-            sql_params.append(data["query_parameters"]["magnitude"][band]["max"][1])
-            sql_params.append(firstmjd["max"])
+                sql_params.append(firstmjd["max"])
 
     #If there are filters add to sql
     if len(sql_filters) > 0:
@@ -212,6 +194,7 @@ def query():
         sort_desc = "DESC"
     count_query,sql_query,sql_params = parse_filters(data)
 
+    #Creating connnection
     connection  = g.db
 
     #Counting total if row_number is not set

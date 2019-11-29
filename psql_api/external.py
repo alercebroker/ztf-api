@@ -34,6 +34,7 @@ def get_tns_df(searchweb,searchoptions):
 #Get last month ALeRCE tns data webscrapping the tns page
 #saves result in cache for 60 min
 @external_blueprint.route("/get_alerce_tns")
+@cache.memoize(60*60)
 def get_alerce_tns():
     searchweb = "https://wis-tns.weizmann.ac.il/search?"
     searchoptions = {
