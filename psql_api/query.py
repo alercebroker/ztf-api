@@ -38,7 +38,9 @@ class_map = {
     "dsct":2,
     "ceph":0,
     "lpv":4,
-    "rrl":5
+    "rrl":5,
+    'qso-i': 24,
+    'rs-cvn': 23
 }
 
 #Sanity check of OID
@@ -369,7 +371,7 @@ def get_sql():
 
 
 
-@query_blueprint.route("/get_current_classes")
+@query_blueprint.route("/get_current_classes", methods=("GET","POST"))
 def get_current_classes():
     connection = g.db
     sql = "SELECT class.name as name, class.id as id FROM tax_class INNER JOIN class ON tax_class.classid = class.id WHERE taxid = %s"
@@ -380,14 +382,14 @@ def get_current_classes():
     }
 
     cur = connection.cursor()
-    cur.execute(sql,LAST_LATE_TAXONOMY)
+    cur.execute(sql,(LAST_LATE_TAXONOMY,))
     resp = cur.fetchall()
     colnames = [desc[0] for desc in cur.description]
     for row in resp:
         result["late"].append(dict(zip(colnames,row)))
 
 
-    cur.execute(sql,LAST_EARLY_TAXONOMY)
+    cur.execute(sql,(LAST_EARLY_TAXONOMY,))
     resp = cur.fetchall()
     colnames = [desc[0] for desc in cur.description]
     for row in resp:
