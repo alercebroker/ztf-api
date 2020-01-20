@@ -11,6 +11,9 @@ logger = logging.getLogger(__name__)
 query_blueprint = Blueprint('query', __name__, template_folder='templates')
 
 
+LAST_EARLY_TAXONOMY = 3
+LAST_LATE_TAXONOMY = 4
+
 #Classmap from id to name
 #TODO: Get this from DB
 class_map = {
@@ -35,7 +38,9 @@ class_map = {
     "dsct":2,
     "ceph":0,
     "lpv":4,
-    "rrl":5
+    "rrl":5,
+    'qso-i': 24,
+    'rs-cvn': 23
 }
 
 #Sanity check of OID
@@ -361,3 +366,32 @@ def get_sql():
     sql = sql.replace('%s','{}')
 
     return sql.format(*params)
+
+
+
+@query_blueprint.route("/get_current_classes", methods=("GET","POST"))
+def get_current_classes():
+    connection = g.db
+    sql = "SELECT class.name as name, class.id as id FROM tax_class INNER JOIN class ON tax_class.classid = class.id WHERE taxid = %s"
+
+    result = {
+        "early":[],
+        "late": []
+    }
+
+    cur = connection.cursor()
+    cur.execute(sql,(LAST_LATE_TAXONOMY,))
+    resp = cur.fetchall()
+    colnames = [desc[0] for desc in cur.description]
+    for row in resp:
+        result["late"].append(dict(zip(colnames,row)))
+
+
+    cur.execute(sql,(LAST_EARLY_TAXONOMY,))
+    resp = cur.fetchall()
+    colnames = [desc[0] for desc in cur.description]
+    for row in resp:
+        result["early"].append(dict(zip(colnames,row)))
+
+    return jsonify(result)
+>>>>>>> master
