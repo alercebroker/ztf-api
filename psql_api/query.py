@@ -35,7 +35,9 @@ class_map = {
     "dsct":2,
     "ceph":0,
     "lpv":4,
-    "rrl":5
+    "rrl":5,
+    "qso-i":24,
+    "rs-cvn":23
 }
 
 #Sanity check of OID
