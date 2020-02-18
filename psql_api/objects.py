@@ -32,7 +32,7 @@ def get_detections():
         for row in resp:
             row = list(row)
             for j in range(len(row)):
-                if type(row[j]) is float and math.isnan(row[j]):
+                if type(row[j]) is float and (math.isnan(row[j]) or math.isinf(row[j])):
                     row[j] = None
             alert = dict(zip(colnames, row)) if row else None
             alerts.append(alert)

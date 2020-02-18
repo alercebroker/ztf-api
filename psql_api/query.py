@@ -394,4 +394,3 @@ def get_current_classes():
         result["early"].append(dict(zip(colnames,row)))
 
     return jsonify(result)
->>>>>>> master
